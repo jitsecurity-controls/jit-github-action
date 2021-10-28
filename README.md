@@ -7,7 +7,7 @@ This repository is holding the Github Action that enables the Jit platform to ru
 ```yaml
 inputs:
   target_dir:
-    description: 'Dir to scan'
+    description: 'Directory to scan'
     required: true
   security_control:
     description: "Docker image tag path of security control to execute"
