@@ -1,6 +1,15 @@
 name: 'Jit security-controls action'
 description: 'Runs a Jit security-control on a target dir'
 inputs:
+  pull_key:
+    description: 'key for pulling the action repo'
+    required: true
+  docker_user:
+    description: 'user for docker registry'
+    required: true
+  docker_password:
+    registr: 'password for docker registry'
+    required: true
   target_dir:
     description: 'Directory to scan'
     required: true
@@ -14,6 +23,30 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: |
+    - name: Checkout .jit
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ github.repository }}
+        token: ${{ github.event.client_payload.payload.github_token }}
+        ref: main
+        path: ".jit/"
+    - name: Checkout original repository
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ github.event.client_payload.payload.full_repo_path }}
+        ref: ${{ github.event.client_payload.payload.commits.head_sha }}
+        fetch-depth: 0
+        token: ${{ github.event.client_payload.payload.github_token }}
+        path: "code/"
+    - name: Check out jit-github-actions
+      uses: actions/checkout@v2
+      with:
+        repository: jitsecurity-controls/jit-github-action
+        ref: main
+        token: ${{ inputs.pull_key }}
+        path: ./.github/actions/jit-github-action
+    - name: Run The Action
+      run: |
+        docker login ghcr.io --username ${{ inputs.docker_user }} --password ${{ inputs.docker_password }}
         docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -v $(pwd)/.jit:/.jit -v $(pwd)/${{ inputs.target_dir }}:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} > artifact.json
       shell: bash
