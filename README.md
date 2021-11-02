@@ -15,9 +15,6 @@ inputs:
   docker_password:
     registr: 'password for docker registry'
     required: true
-  target_dir:
-    description: 'Directory to scan'
-    required: true
   security_control:
     description: "Docker image tag path of security control to execute"
     required: true
