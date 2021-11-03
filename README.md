@@ -6,8 +6,14 @@ This repository is holding the Github Action that enables the Jit platform to ru
 
 ```yaml
 inputs:
-  target_dir:
-    description: 'Directory to scan'
+  pull_key:
+    description: 'key for pulling the action repo'
+    required: true
+  docker_user:
+    description: 'user for docker registry'
+    required: true
+  docker_password:
+    registr: 'password for docker registry'
     required: true
   security_control:
     description: "Docker image tag path of security control to execute"
