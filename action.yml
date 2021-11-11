@@ -42,8 +42,6 @@ runs:
         ref: main
         token: ${{ inputs.pull_key }}
         path: ./.github/actions/jit-github-action
-    - name: Cache container image
-      uses: satackey/action-docker-layer-caching@v0.0.11
     - name: Run The Action
       if: always()
       run: |
