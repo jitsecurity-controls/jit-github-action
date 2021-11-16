@@ -41,7 +41,7 @@ runs:
       uses: actions/checkout@v2
       with:
         repository: ${{ github.event.inputs.full_repo_path }}
-        ref: ${{ github.event.inputs.commits.head_sha }}
+        ref: ${{ github.event.inputs.head_sha }}
         fetch-depth: 0
         token: ${{ github.event.inputs.github_token }}
         path: "code/"
