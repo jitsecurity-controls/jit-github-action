@@ -30,20 +30,20 @@ runs:
   steps:
     - name: Checkout .jit
       if: ${{ inputs.dispatch_type == 'workflow' }}
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2   
       with:
         repository: ${{ github.repository }}
-        token: ${{ github.event.inputs.github_token }}
+        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         ref: main
         path: ".jit/"
     - name: Checkout original repository
       if: ${{ inputs.dispatch_type == 'workflow' }}
       uses: actions/checkout@v2
       with:
-        repository: ${{ github.event.inputs.full_repo_path }}
-        ref: ${{ github.event.inputs.head_sha }}
+        repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
+        ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         fetch-depth: 0
-        token: ${{ github.event.inputs.github_token }}
+        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         path: "code/"
     - name: Checkout .jit (using deprecated repository)
       if: ${{ inputs.dispatch_type == 'repository' }}
