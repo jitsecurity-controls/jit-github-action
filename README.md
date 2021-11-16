@@ -13,7 +13,7 @@ inputs:
     description: 'user for docker registry'
     required: true
   docker_password:
-    registr: 'password for docker registry'
+    description: 'password for docker registry'
     required: true
   security_control:
     description: "Docker image tag path of security control to execute"
@@ -21,4 +21,12 @@ inputs:
   security_control_args:
     description: "argument to pass to the security control"
     required: false
+  security_control_output_file:
+    description: "path to the security control output"
+    required: false
+    default: ""
+  dispatch_type:
+    description: "workflow or repository (deprecated) dispatch"
+    required: false
+    default: "repository"
 ```
