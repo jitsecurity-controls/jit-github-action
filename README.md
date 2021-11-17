@@ -26,7 +26,7 @@ inputs:
     required: false
     default: ""
   dispatch_type:
-    description: "workflow or repository (deprecated) dispatch"
+    description: "'workflow' or 'repository' (repository dispatch is deprecated and will be removed)"
     required: false
     default: "repository"
 ```
