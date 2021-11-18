@@ -8,7 +8,7 @@ inputs:
     description: 'user for docker registry'
     required: true
   docker_password:
-    registr: 'password for docker registry'
+    description: 'password for docker registry'
     required: true
   security_control:
     description: "Docker image tag path of security control to execute"
@@ -20,18 +20,41 @@ inputs:
     description: "path to the security control output"
     required: false
     default: ""
+  dispatch_type:
+    description: "'workflow' or 'repository' (repository dispatch is deprecated and will be removed)"
+    required: false
+    default: "repository"
 
 runs:
   using: "composite"
   steps:
     - name: Checkout .jit
+      if: ${{ inputs.dispatch_type == 'workflow' }}
+      uses: actions/checkout@v2   
+      with:
+        repository: ${{ github.repository }}
+        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
+        ref: main
+        path: ".jit/"
+    - name: Checkout original repository
+      if: ${{ inputs.dispatch_type == 'workflow' }}
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
+        ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
+        fetch-depth: 0
+        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
+        path: "code/"
+    - name: Checkout .jit (using deprecated repository)
+      if: ${{ inputs.dispatch_type == 'repository' }}
       uses: actions/checkout@v2
       with:
         repository: ${{ github.repository }}
         token: ${{ github.event.client_payload.payload.github_token }}
         ref: main
         path: ".jit/"
-    - name: Checkout original repository
+    - name: Checkout original repository (using deprecated repository)
+      if: ${{ inputs.dispatch_type == 'repository' }}
       uses: actions/checkout@v2
       with:
         repository: ${{ github.event.client_payload.payload.full_repo_path }}
