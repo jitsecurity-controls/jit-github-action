@@ -24,6 +24,10 @@ inputs:
     description: "'workflow' or 'repository' (repository dispatch is deprecated and will be removed)"
     required: false
     default: "repository"
+  client_payload:
+    description: "client payload"
+    required: false
+    default: ""   
 
 runs:
   using: "composite"
@@ -62,17 +66,22 @@ runs:
         fetch-depth: 0
         token: ${{ github.event.client_payload.payload.github_token }}
         path: "code/"
-    - name: Check out jit-github-actions
-      uses: actions/checkout@v2
-      with:
-        repository: jitsecurity-controls/jit-github-action
-        ref: main
-        token: ${{ inputs.pull_key }}
-        path: ./.github/actions/jit-github-action
+    # - name: Check out jit-github-actions
+    #   uses: actions/checkout@v2
+    #   with:
+    #     repository: jitsecurity-controls/jit-github-action
+    #     ref: main
+    #     token: ${{ inputs.pull_key }}
+    #     path: ./.github/actions/jit-github-action
     - name: Run The Action
       if: always()
       run: |
         docker login ghcr.io --username ${{ inputs.docker_user }} --password ${{ inputs.docker_password }}
-        docker pull ${{ inputs.security_control }}
-        docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} > artifact.json
+        CONTROLS=${{ fromJSON(github.event.inputs.client_payload).payload.tenant_config }}
+        for control in ${CONTROLS[@]}
+        do
+          echo -e "$control"
+          docker pull ghcr.io/jitsecurity-controls/control-detect-secrets-slim:latest
+          docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} > artifact.json
+        done
       shell: bash
