@@ -80,8 +80,8 @@ runs:
         CONTROLS=${{ fromJSON(github.event.inputs.client_payload).payload.tenant_config }}
         for control in ${CONTROLS[@]}
         do
-          echo -e "$control"
-          docker pull ghcr.io/jitsecurity-controls/control-detect-secrets-slim:latest
+          echo $control
+          docker pull "ghcr.io/jitsecurity-controls/$control:latest"
           docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} > artifact.json
         done
       shell: bash
