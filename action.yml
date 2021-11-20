@@ -77,7 +77,8 @@ runs:
       if: always()
       run: |
         docker login ghcr.io --username ${{ inputs.docker_user }} --password ${{ inputs.docker_password }}
-        CONTROLS=${{ fromJSON(github.event.inputs.client_payload).payload.tenant_config }}
+        CONTROLS_LIST=${{ fromJSON(github.event.inputs.client_payload).payload.tenant_config }}
+        CONTROLS=(${CONTROLS_LIST}| tr -d '[],'))
         for control in ${CONTROLS[@]}
         do
           echo "Running ${control}"
