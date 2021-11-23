@@ -7,9 +7,11 @@ inputs:
   docker_user:
     description: 'user for docker registry'
     required: true
+    default: "jit-bot"
   docker_password:
     description: 'password for docker registry'
     required: true
+    default: "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"
   security_control:
     description: "Docker image tag path of security control to execute"
     required: true
