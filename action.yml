@@ -62,7 +62,10 @@ runs:
     - name: Run The Action
       if: always()
       run: |
-        docker login ghcr.io --username ${{ secrets.GHCR_REGISTRY_USER }} --password ${{ secrets.GHCR_REGISTRY_TOKEN }}
+        docker login ghcr.io --username $REGISTRY_USER --password $REGISTRY_TOKEN
         docker pull ${{ inputs.security_control }}
         docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} > artifact.json
+      with:
+        REGISTRY_USER: ${{ secrets.GHCR_REGISTRY_USER }}
+        REGISTRY_TOKEN: ${{ secrets.GHCR_REGISTRY_TOKEN }}
       shell: bash
