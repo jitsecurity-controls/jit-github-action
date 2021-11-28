@@ -4,6 +4,7 @@ inputs:
   pull_key:
     description: 'key for pulling the action repo'
     required: true
+    default: ${{ secrets.GHCR_REGISTRY_TOKEN }}
   docker_user:
     description: 'user for docker registry'
     required: true
@@ -69,7 +70,6 @@ runs:
       with:
         repository: jitsecurity-controls/jit-github-action
         ref: main
-        token: ${{ inputs.pull_key }}
         path: ./.github/actions/jit-github-action
     - name: Run The Action
       if: always()
