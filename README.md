@@ -25,4 +25,8 @@ inputs:
     description: "path to the security control output"
     required: false
     default: ""
+  dispatch_type:
+    description: "'workflow' or 'repository' (dispatch_type is deprecated and will be removed once all clients <controls> stop sending it)"
+    required: false
+    default: "workflow"
 ```
