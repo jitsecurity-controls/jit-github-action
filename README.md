@@ -26,7 +26,7 @@ inputs:
     required: false
     default: ""
   dispatch_type:
-    description: "'workflow' or 'repository' (repository dispatch is deprecated and will be removed)"
+    description: "'workflow' or 'repository' (dispatch_type is deprecated and will be removed once all clients <controls> stop sending it)"
     required: false
-    default: "repository"
+    default: "workflow"
 ```

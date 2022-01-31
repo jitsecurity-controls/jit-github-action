@@ -18,15 +18,14 @@ inputs:
     required: false
     default: ""
   dispatch_type:
-    description: "'workflow' or 'repository' (repository dispatch is deprecated and will be removed)"
+    description: "'workflow' or 'repository' (dispatch_type is deprecated and will be removed)"
     required: false
-    default: "repository"
+    default: "workflow"
 
 runs:
   using: "composite"
   steps:
     - name: Checkout .jit
-      if: ${{ inputs.dispatch_type == 'workflow' }}
       uses: actions/checkout@v2   
       with:
         repository: ${{ github.repository }}
@@ -34,30 +33,12 @@ runs:
         ref: main
         path: ".jit/"
     - name: Checkout original repository
-      if: ${{ inputs.dispatch_type == 'workflow' }}
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         fetch-depth: 0
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
-        path: "code/"
-    - name: Checkout .jit (using deprecated repository)
-      if: ${{ inputs.dispatch_type == 'repository' }}
-      uses: actions/checkout@v2
-      with:
-        repository: ${{ github.repository }}
-        token: ${{ github.event.client_payload.payload.github_token }}
-        ref: main
-        path: ".jit/"
-    - name: Checkout original repository (using deprecated repository)
-      if: ${{ inputs.dispatch_type == 'repository' }}
-      uses: actions/checkout@v2
-      with:
-        repository: ${{ github.event.client_payload.payload.full_repo_path }}
-        ref: ${{ github.event.client_payload.payload.commits.head_sha }}
-        fetch-depth: 0
-        token: ${{ github.event.client_payload.payload.github_token }}
         path: "code/"
     - name: Check out jit-github-actions
       uses: actions/checkout@v2
