@@ -54,5 +54,5 @@ runs:
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
         cat /tmp/token.txt | docker login ghcr.io --username ${{ inputs.docker_user }} --password-stdin
         docker pull ${{ inputs.security_control }}
-        docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -v $(pwd)/code:/code ${{ inputs.security_control }} --user $(id -u):$(id -g) -- ${{ inputs.security_control_args }}
+        docker run --rm --user $(id -u):$(id -g) -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT='${{ toJSON(github) }}' -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
       shell: bash
