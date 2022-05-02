@@ -40,6 +40,7 @@ runs:
         fetch-depth: 0
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         path: "code/"
+        set-safe-directory: true
     - name: Check out jit-github-actions
       uses: actions/checkout@v2
       with:
