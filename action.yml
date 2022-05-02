@@ -33,7 +33,7 @@ runs:
         ref: main
         path: ".jit/"
     - name: Checkout original repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
