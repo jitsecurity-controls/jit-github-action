@@ -30,7 +30,7 @@ runs:
       with:
         repository: ${{ github.repository }}
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
-        ref: main
+        ref: ''
         path: ".jit/"
     - name: Checkout original repository
       uses: actions/checkout@v2
