@@ -7,6 +7,10 @@ inputs:
   docker_password:
     description: 'password for docker registry'
     required: true
+  env_var_name:
+    required: false
+  env_var_value:
+    required: false
   security_control:
     description: "Docker image tag path of security control to execute"
     required: true
@@ -58,5 +62,5 @@ runs:
         docker pull ${{ inputs.security_control }}
         JSON_GITHUB_EVENT='${{ toJSON(github) }}'
         B64_ENCODED_GITHUB_EVENT=$(echo $JSON_GITHUB_EVENT | base64)
-        docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml -e ${{ inputs.env_var_name }}=${{ env_var_value }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
       shell: bash
