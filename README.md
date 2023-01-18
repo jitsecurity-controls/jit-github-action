@@ -15,6 +15,10 @@ inputs:
   docker_password:
     description: 'password for docker registry'
     required: true
+  container_args:
+    description: 'container additional args'
+    required: false
+    default: ""  
   security_control:
     description: "Docker image tag path of security control to execute"
     required: true
