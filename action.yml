@@ -33,7 +33,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout .jit
+    - name: Checkout centralized repository
       uses: actions/checkout@v2   
       with:
         repository: ${{ github.repository }}
