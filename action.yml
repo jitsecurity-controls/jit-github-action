@@ -33,8 +33,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set centralized_repo_files_location env var
+      shell: bash
+      env:
+        CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
+      run: |
+        echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
+        echo "CENTRALIZED_REPO_FILES_LOCATION_PATH=${PWD}/.jit/${CENTRALIZED_REPO_FILES_LOCATION}" >> $GITHUB_ENV
     - name: Checkout centralized repository
-      uses: actions/checkout@v2   
+      uses: actions/checkout@v2
       with:
         repository: ${{ github.repository }}
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
@@ -62,5 +69,5 @@ runs:
         docker pull ${{ inputs.security_control }}
         JSON_GITHUB_EVENT='${{ toJSON(github) }}'
         B64_ENCODED_GITHUB_EVENT=$(echo $JSON_GITHUB_EVENT | base64)
-        docker run --rm -e CONFIG_FILE_PATH=/.jit/jit.yml ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v $(pwd)/.jit:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
       shell: bash
