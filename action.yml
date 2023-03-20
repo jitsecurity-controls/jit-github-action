@@ -75,4 +75,4 @@ runs:
       shell: bash
       env:
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
-        context: ${{ fromJSON(github.event.inputs.client_payload).payload }}
+        context: ${{ toJSON(github.event.inputs.client_payload.payload) }}
