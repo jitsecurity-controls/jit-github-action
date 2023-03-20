@@ -37,7 +37,7 @@ runs:
       shell: bash
       env:
         CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
-        context: ${{ fromJSON(github.event.inputs.client_payload).payload }}
+      
 
       run: |
         echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
