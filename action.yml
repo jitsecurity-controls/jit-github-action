@@ -32,9 +32,6 @@ inputs:
 
 runs:
   using: "composite"
-  env:
-    CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
-    context: ${{ fromJSON(github.event.inputs.client_payload).payload }}
   steps:
     - name: Set centralized_repo_files_location env var
       shell: bash
@@ -66,7 +63,7 @@ runs:
         repository: jitsecurity-controls/jit-github-action
         ref: main
         path: ./.github/actions/jit-github-action
-    - name: Run The Action
+    - name: Run The Action        
       if: always()
       run: |
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
@@ -78,4 +75,4 @@ runs:
       shell: bash
       env:
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
-  
+        context: ${{ fromJSON(github.event.inputs.client_payload).payload }}
