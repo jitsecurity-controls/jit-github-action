@@ -29,6 +29,12 @@ inputs:
     description: "fail control when finding is found"
     required: false
     default: true
+  context:
+    description: "fail control when finding is found"
+    required: true
+  runner_setup:
+    description: "fail control when finding is found"
+    required: true
 
 runs:
   using: "composite"
@@ -51,7 +57,7 @@ runs:
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-        ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commitssssssssss.head_sha }}
+        ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         fetch-depth: 0
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         path: "code/"
