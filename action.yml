@@ -44,7 +44,7 @@ runs:
       shell: bash
       env:
         CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
-        mount_original_repo_command: ${{fromJSON(["-v $(pwd)/code:/code",""])[fromJSON(inputs.runner_setup).checkout]  }} 
+        mount_original_repo_command: ${{fromJSON('["-v $(pwd)/code:/code",""]')[fromJSON(inputs.runner_setup).checkout]  }} 
         RUNNER_SETUP: ${{ fromJSON(inputs.runner_setup) }}
       run: |
         echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
