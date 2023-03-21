@@ -76,6 +76,6 @@ runs:
         docker pull ${{ inputs.security_control }}
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
-        docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} -- ${{ inputs.context }}.centralized_repo_files_location --- ${{ inputs.context }} ---- ${{ inputs.context }}
+        docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} -- ${{ fromJSON(inputs.context).centralized_repo_files_location }} --- ${{ fromJSON(inputs.context) }} ---- ${{ fromJSON(inputs.context) }}
       shell: bash
       
