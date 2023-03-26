@@ -34,7 +34,7 @@ inputs:
     default: '{"checkout": true}'
   context:
     description: Execution context
-    default: fromJSON("{}")  
+    default: '{}' 
   
 
 runs:
