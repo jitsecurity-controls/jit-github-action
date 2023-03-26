@@ -55,7 +55,7 @@ runs:
         ref: ''
         path: ".jit/"
     - name: Checkout original repository
-      if: ${{ fromJSON(inputs.runner_setup).checkout != flase  }} 
+      if: ${{ fromJSON(inputs.runner_setup).checkout != false  }} 
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
