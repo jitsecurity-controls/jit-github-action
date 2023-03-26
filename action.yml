@@ -46,6 +46,7 @@ runs:
         CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
         mount_original_repo_command: ${{fromJSON('["-v $(pwd)/code:/code",""]')[fromJSON(inputs.runner_setup).checkout == true]  }} 
         RUNNER_SETUP: ${{ toJSON(fromJSON(inputs.runner_setup)) }}
+        RUNNER_SETUP2: ${{ fromJSON(inputs.runner_setup).checkout }}
       run: |
         echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
         echo "CENTRALIZED_REPO_FILES_LOCATION_PATH=${PWD}/.jit/${CENTRALIZED_REPO_FILES_LOCATION}" >> $GITHUB_ENV
