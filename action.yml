@@ -56,7 +56,7 @@ runs:
         path: ".jit/"
     - name: Checkout original repository
       # this if should not pass only if there is runner_setup and the checkout is false, else its true.
-      if: ${{ !((fromJSON(inputs.runner_setup) && (fromJSON(inputs.runner_setup).checkout != false))  }} 
+      if: ${{ !((fromJSON(inputs.runner_setup) && (fromJSON(inputs.runner_setup).checkout == false))  }} 
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
