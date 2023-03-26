@@ -44,7 +44,7 @@ runs:
       shell: bash
       env:
         CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
-        mount_original_repo_command: ${{ if or(eq(fromJSON(inputs.runner_setup), {}), fromJSON(inputs.runner_setup).checkout) }}-v $(pwd)/code:/code{{ else }}{{ endif }}
+        mount_original_repo_command: ${{ fromJSON('["-v $(pwd)/code:/code",""]')[(or(eq(fromJSON(inputs.runner_setup), {}), fromJSON(inputs.runner_setup).checkout))] }}
         RUNNER_SETUP: ${{ toJSON(fromJSON(inputs.runner_setup)) }}
         RUNNER_SETUP2: ${{ fromJSON(inputs.runner_setup).checkout }}
       run: |
