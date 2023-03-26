@@ -81,7 +81,7 @@ runs:
       shell: bash
       env:
         runner_setup___if_cond: ${{ fromJSON(inputs.runner_setup).checkout }}
-        mount_original_repo_command: ${{ fromJSON('["-v $(pwd)/code:/code", ""]')[((fromJSON(inputs.runner_setup).checkout == false))] }}
+        mount_original_repo_command: ${{ fromJSON('["-v $(pwd)/code:/code", ""]')[((fromJSON(inputs.runner_setup) && (fromJSON(inputs.runner_setup).checkout == false)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
       
       
