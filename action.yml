@@ -56,7 +56,7 @@ runs:
         path: ".jit/"
     - name: Checkout original repository
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
-      if: ${{ (!(fromJSON(inputs.runner_setup) || (fromJSON(inputs.runner_setup).checkout == true))) }} 
+      if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true))) }} 
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -82,5 +82,5 @@ runs:
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
-        mount_original_repo_command: ${{ fromJSON('["-v $(pwd)/code:/code", ""]')[(!(fromJSON(inputs.runner_setup) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
+        mount_original_repo_command: ${{ fromJSON('["-v $(pwd)/code:/code", ""]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
