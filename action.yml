@@ -29,6 +29,13 @@ inputs:
     description: "fail control when finding is found"
     required: false
     default: true
+  runner_setup:
+    description: RunnerSetup dictionary
+    default: '{"checkout": true}'
+  context:
+    description: Execution context
+    default: '{}' 
+  
 
 runs:
   using: "composite"
@@ -48,6 +55,8 @@ runs:
         ref: ''
         path: ".jit/"
     - name: Checkout original repository
+      # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
+      if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }} 
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -69,8 +78,9 @@ runs:
         docker pull ${{ inputs.security_control }}
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
-        docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} -v $(pwd)/code:/code ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }} 
       shell: bash
       env:
+        # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
+        mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
-
