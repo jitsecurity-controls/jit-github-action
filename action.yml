@@ -73,7 +73,7 @@ runs:
     - name: Run The Action
       if: always()
       run: |
-        echo $GH_EVENT_JSON | add-mask
+        echo $GH_EVENT_JSON | sed 's/./\*/g' | tr -d '\n' | add-mask
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
         cat /tmp/token.txt | docker login ghcr.io --username ${{ inputs.docker_user }} --password-stdin
         docker pull ${{ inputs.security_control }}
