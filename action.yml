@@ -73,6 +73,7 @@ runs:
     - name: Run The Action
       if: always()
       run: |
+        echo $GH_EVENT_JSON | add-mask
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
         cat /tmp/token.txt | docker login ghcr.io --username ${{ inputs.docker_user }} --password-stdin
         docker pull ${{ inputs.security_control }}
@@ -83,6 +84,4 @@ runs:
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
-        GH_EVENT_JSON: 
-          value: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
-          no-log: true
+        GH_EVENT_JSON: ${{ toJSON(github) }}
