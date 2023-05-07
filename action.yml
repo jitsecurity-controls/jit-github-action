@@ -81,6 +81,7 @@ runs:
       uses: jit-shlomi/cache-docker-latest-github-action@main
       with:
         docker-image: ${{ inputs.security_control }}
+      continue-on-error: true
     - name: Run The Action
       if: always()
       run: |
