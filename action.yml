@@ -76,11 +76,11 @@ runs:
       run: |
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
         cat /tmp/token.txt | docker login ghcr.io --username ${{ inputs.docker_user }} --password-stdin
-    - name: Use Caching Image Action
-      if: always()    
-      uses: jit-shlomi/cache-docker-latest-github-action@main
-      with:
-        docker-image: ${{ inputs.security_control }}
+    # - name: Use Caching Image Action
+    #   if: always()    
+    #   uses: jit-shlomi/cache-docker-latest-github-action@main
+    #   with:
+    #     docker-image: ${{ inputs.security_control }}
     - name: Run The Action
       if: always()
       run: |
