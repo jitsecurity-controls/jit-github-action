@@ -88,7 +88,7 @@ runs:
         echo pwd $pwd
         echo ls pwd
         ls $pwd
-        ls $/pwd/code
+        ls $pwd/code
         echo *************
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
         cat /tmp/token.txt | docker login ghcr.io --username ${{ inputs.docker_user }} --password-stdin
