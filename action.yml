@@ -33,8 +33,8 @@ inputs:
     default: '{"checkout": true}'
   context:
     description: Execution context
-    default: '{}' 
-  
+    default: '{}'
+
 
 runs:
   using: "composite"
@@ -55,7 +55,7 @@ runs:
         path: ".jit/"
     - name: Checkout original repository
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
-      if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }} 
+      if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }}
       uses: actions/checkout@v2
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -77,7 +77,11 @@ runs:
         docker pull ${{ inputs.security_control }}
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
-        docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        if [[ -n "${inputs.security_control_output_file}" ]]; then
+          docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        else
+          docker run --rm -e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" ${{ inputs.container_args }} -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code -e ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit -e FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        fi
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
