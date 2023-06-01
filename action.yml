@@ -20,7 +20,6 @@ inputs:
   security_control_output_file:
     description: "path to the security control output"
     required: false
-    default: ""
   dispatch_type:
     description: "'workflow' or 'repository' (dispatch_type is deprecated and will be removed)"
     required: false
