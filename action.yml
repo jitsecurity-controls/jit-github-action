@@ -83,7 +83,7 @@ runs:
         echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> tmp/docker_env.txt
-        ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }}
+        cat /tmp/docker_env.txt
         if [ ${{ inputs.security_control_output_file }} != "" ]
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> tmp/docker_env.txt
