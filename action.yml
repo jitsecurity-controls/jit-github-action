@@ -83,7 +83,6 @@ runs:
         echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
-        cat /tmp/docker_env.txt
         if [ ${{ inputs.security_control_output_file }} != "" ]
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
