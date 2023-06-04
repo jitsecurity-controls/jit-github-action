@@ -78,13 +78,13 @@ runs:
         docker pull ${{ inputs.security_control }}
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
-        DOCKER_RUN_ARGS="-e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" "${{ inputs.container_args }}" -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code "${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }}" -v "${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit" -e FAIL_ON_FINDINGS="${{ inputs.fail_on_findings }}" "${{ env.mount_original_repo_command }}" "${{ inputs.security_control }}""
+        DOCKER_RUN_ARGS='-e CONFIG_FILE_PATH="${CONFIG_FILE_PATH}" "${{ inputs.container_args }}" -e GITHUB_EVENT="$B64_ENCODED_GITHUB_EVENT" -e SOURCE_CODE_FOLDER=/code "${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }}" -v "${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit" -e FAIL_ON_FINDINGS="${{ inputs.fail_on_findings }}" "${{ env.mount_original_repo_command }}" "${{ inputs.security_control }}"'
         if [ ${{ inputs.security_control_output_file }} != "" ]
         then
-          DOCKER_RUN_ARGS+=" -e SECURITY_CONTROL_OUTPUT_FILE="${{ inputs.security_control_output_file }}" -- "${{ inputs.security_control_args }}""
+          DOCKER_RUN_ARGS+=' -e SECURITY_CONTROL_OUTPUT_FILE="${{ inputs.security_control_output_file }}" -- "${{ inputs.security_control_args }}"'
           echo "No container args: $DOCKER_RUN_ARGS"
         else
-          DOCKER_RUN_ARGS+=" -- "${{ inputs.security_control_args }}""
+          DOCKER_RUN_ARGS+=' -- "${{ inputs.security_control_args }}"'
           echo "Container args: $DOCKER_RUN_ARGS"
          fi
         docker run --rm $DOCKER_RUN_ARGS
