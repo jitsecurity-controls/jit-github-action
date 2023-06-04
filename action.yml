@@ -86,7 +86,7 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
-        docker run --rm $DOCKER_RUN_ARGS --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
+        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
