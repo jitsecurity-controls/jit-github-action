@@ -48,7 +48,7 @@ runs:
         echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
         echo "CENTRALIZED_REPO_FILES_LOCATION_PATH=${PWD}/.jit/${CENTRALIZED_REPO_FILES_LOCATION}" >> $GITHUB_ENV
     - name: Checkout centralized repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: ${{ github.repository }}
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
@@ -57,7 +57,7 @@ runs:
     - name: Checkout original repository
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
       if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }}
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
@@ -65,7 +65,7 @@ runs:
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         path: "code/"
     - name: Check out jit-github-actions
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: jitsecurity-controls/jit-github-action
         ref: main
