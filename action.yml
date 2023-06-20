@@ -74,8 +74,13 @@ runs:
       if: always()
       run: |
         echo "${{ inputs.docker_password }}" | base64 --decode > /tmp/token.txt
+        
+        START_TIME=$(date +%s)
         cat /tmp/token.txt | docker login ghcr.io --username ${{ inputs.docker_user }} --password-stdin
         docker pull ${{ inputs.security_control }}
+        END_TIME=$(date +%s)
+        echo "DEBUG: Pulling the image took $((END_TIME - START_TIME)) seconds"
+        
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
