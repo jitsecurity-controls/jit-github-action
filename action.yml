@@ -81,11 +81,23 @@ runs:
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
-        echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
-        if [ ${{ inputs.security_control_output_file }} != "" ]
-        then
-          echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
-        fi
+        # Iterate over the variables
+        env_variable_names = ("fail_on_findings" "security_control_output_file" "pipeline_file")
+        for var in "${variables[@]}"
+        do
+            # Convert variable name to uppercase
+            UPPERCASE_ENV_VAR=$(echo ${var} | tr '[:lower:]' '[:upper:]')
+            # Get the input value
+            echo "Getting input value for ${var}"
+            value=${{ inputs.${var} }}
+            echo "Value: ${value}"
+            # Check if the value is not empty or null
+            if [[ -n "$value" ]]
+            then
+                # Set the environment variables
+                echo export "${uppercase_var}=${value}" >> /tmp/docker_env.txt
+            fi
+        done
         docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ inputs.security_control }} -- ${{ inputs.security_control_args }}
       shell: bash
       env:
