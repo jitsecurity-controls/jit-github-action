@@ -83,13 +83,13 @@ runs:
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         # Iterate over the variables
         env_variable_names = ("fail_on_findings" "security_control_output_file" "pipeline_file")
-        for var in "${variables[@]}"
+        for var_name in "${env_variable_names[@]}"
         do
             # Convert variable name to uppercase
             UPPERCASE_ENV_VAR=$(echo ${var} | tr '[:lower:]' '[:upper:]')
             # Get the input value
             echo "Getting input value for ${var}"
-            value=${{ inputs.${var} }}
+            value=${{ inputs.$var_name }}
             echo "Value: ${value}"
             # Check if the value is not empty or null
             if [[ -n "$value" ]]
