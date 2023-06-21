@@ -82,7 +82,7 @@ runs:
         echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
-        if [ -n ${{ inputs.pipeline_file }}]
+        if [ -n ${{ inputs.pipeline_file }} ]
         then
           echo PIPELINE_FILE_PATH=${{ inputs.pipeline_file_path }} >> /tmp/docker_env.txt
         fi
