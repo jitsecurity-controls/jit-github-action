@@ -89,7 +89,7 @@ runs:
             UPPERCASE_ENV_VAR=$(echo ${var} | tr '[:lower:]' '[:upper:]')
             # Get the input value
             echo "Getting input value for ${var}"
-            value="${{ inputs.$var_name }}"
+            value="${{ inputs[$var_name] }}"
             echo "Value: ${value}"
             # Check if the value is not empty or null
             if [[ -n "$value" ]]
