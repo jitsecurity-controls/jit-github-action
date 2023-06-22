@@ -21,6 +21,10 @@ inputs:
     description: "path to the security control output"
     required: false
     default: ""
+  pipeline_file_name:
+    description: "name of the pipeline file"
+    required: false
+    default: ""
   dispatch_type:
     description: "'workflow' or 'repository' (dispatch_type is deprecated and will be removed)"
     required: false
@@ -82,9 +86,10 @@ runs:
         echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
-        if [ -n ${{ inputs.pipeline_file }} ]
+        echo PIPELINE_FILE_NAME=${{ inputs.fail_on_findings }}
+        if [ -n ${{ inputs.pipeline_file_path }} ]
         then
-          echo PIPELINE_FILE_PATH=${{ inputs.pipeline_file_path }} >> /tmp/docker_env.txt
+          echo PIPELINE_FILE_NAME=${{ inputs.pipeline_file_name }} >> /tmp/docker_env.txt
         fi
         if [ ${{ inputs.security_control_output_file }} != "" ]
         then
