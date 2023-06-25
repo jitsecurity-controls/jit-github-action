@@ -70,17 +70,20 @@ runs:
         repository: jitsecurity-controls/jit-github-action
         ref: main
         path: ./.github/actions/jit-github-action
+    - name: Login to docker registry
+      shell: bash
+      run: |
+        curl \
+          -X POST \
+          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          https://api.bandit.jitdev.io/authentication/registry/login \
+          | docker login --username AWS --password-stdin registry.bandit.jitdev.io
+    - name: Pull docker image
+      shell: bash
+      run: docker pull registry.bandit.jitdev.io/control-semgrep-alpine:latest
     - name: Run The Action
       if: always()
       run: |
-        JWT=${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}
-        echo $JWT
-        
-        curl -X POST --header "Authorization: Bearer $JWT" https://api.bandit.jitdev.io/authentication/registry/login | docker login --username AWS --password-stdin registry.bandit.jitdev.io
-        echo $?
-        
-        docker pull registry.bandit.jitdev.io/control-semgrep-alpine:latest
-        
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
