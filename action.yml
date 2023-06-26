@@ -80,10 +80,12 @@ runs:
           | docker login --username AWS --password-stdin registry.bandit.jitdev.io
     - name: Pull docker image
       shell: bash
+      id: pull-image
       run: |
         export IMAGE=$(sed 's/ghcr.io\/jitsecurity-controls/registry.bandit.jitdev.io/g' <<< "${{ inputs.security_control }}")
         echo Image to be used $IMAGE
         docker pull $IMAGE
+        echo "image=$IMAGE" >> $GITHUB_ENV
     - name: Run The Action
       if: always()
       run: |
@@ -97,8 +99,8 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
-        echo Image to be used $IMAGE
-        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} $IMAGE -- ${{ inputs.security_control_args }}
+        echo Image to be used ${{ env.image }}
+        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ env.image }} -- ${{ inputs.security_control_args }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
