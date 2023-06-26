@@ -74,6 +74,14 @@ runs:
         ref: main
         path: ./.github/actions/jit-github-action
 
+    # In order to test using ECR instead of ghcr, a temporary step is added to modify the source registry to ECR
+    - name: Set docker image value
+      shell: bash
+      run: |
+        IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
+        echo Image to be used $IMAGE
+        echo "image=$IMAGE" >> $GITHUB_ENV
+
     - name: Login to docker registry
       shell: bash
       run: >
@@ -82,14 +90,6 @@ runs:
         -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}"
         ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login
         | docker login --username AWS --password-stdin registry.jit.io
-
-    # In order to test using ECR instead of ghcr, a temporary step is added to modify the source registry to ECR
-    - name: Set docker image value
-      shell: bash
-      run: |
-        IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
-        echo Image to be used $IMAGE
-        echo "image=$IMAGE" >> $GITHUB_ENV
 
     - name: Pull docker image
       shell: bash
