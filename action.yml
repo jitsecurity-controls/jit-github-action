@@ -80,7 +80,7 @@ runs:
         curl \
           -X POST \
           -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
-          https://api.bandit.jitdev.io/authentication/registry/login \
+          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.bandit.jitdev.io
 
     - name: Pull docker image
