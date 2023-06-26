@@ -90,6 +90,11 @@ runs:
         echo Image to be used $IMAGE
         docker pull $IMAGE
         echo "image=$IMAGE" >> $GITHUB_ENV
+        
+        BASE_API=${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}
+        export BASE_DOMAIN=$( echo $BASE_API | cut -d '.' -f2- )
+        echo BASE_DOMAIN is $BASE_DOMAIN
+        echo "BASE_DOMAIN=$BASE_DOMAIN" >> $GITHUB_ENV
 
     - name: Run The Action
       if: always()
