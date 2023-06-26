@@ -83,13 +83,17 @@ runs:
           ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.jit.io
 
-    - name: Pull docker image
+    # In order to test using ECR instead of ghcr, a temporary step is added to modify the source registry to ECR
+    - name: Set docker image value
       shell: bash
       run: |
-        export IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
+        IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
         echo Image to be used $IMAGE
-        docker pull $IMAGE
         echo "image=$IMAGE" >> $GITHUB_ENV
+
+    - name: Pull docker image
+      shell: bash
+      run: docker pull ${{ env.image }}
 
     - name: Run The Action
       if: always()
@@ -104,7 +108,6 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
-        echo Image to be used ${{ env.image }}
         docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ env.image }} -- ${{ inputs.security_control_args }}
       shell: bash
       env:
