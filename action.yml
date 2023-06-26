@@ -77,23 +77,16 @@ runs:
     - name: Login to docker registry
       shell: bash
       run: |
-        BASE_API=${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}
-        export BASE_DOMAIN=$( echo $BASE_API | cut -d '.' -f2- )
-        echo BASE_DOMAIN is $BASE_DOMAIN
-        echo "BASE_DOMAIN=$BASE_DOMAIN" >> $GITHUB_ENV
-        
         curl \
           -X POST \
           -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
           ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
-          | docker login --username AWS --password-stdin registry.$BASE_DOMAIN
+          | docker login --username AWS --password-stdin registry.jit.io
 
     - name: Pull docker image
       shell: bash
       run: |
-        
-        
-        export IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.${{ env.BASE_DOMAIN }}/g" <<< "${{ inputs.security_control }}")
+        export IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
         echo Image to be used $IMAGE
         docker pull $IMAGE
         echo "image=$IMAGE" >> $GITHUB_ENV
