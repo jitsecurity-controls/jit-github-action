@@ -80,7 +80,6 @@ runs:
           | docker login --username AWS --password-stdin registry.bandit.jitdev.io
     - name: Pull docker image
       shell: bash
-      id: pull-image
       run: |
         export IMAGE=$(sed 's/ghcr.io\/jitsecurity-controls/registry.bandit.jitdev.io/g' <<< "${{ inputs.security_control }}")
         echo Image to be used $IMAGE
