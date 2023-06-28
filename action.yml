@@ -108,7 +108,7 @@ runs:
         IMAGE_DIGEST=$(docker manifest inspect ${{ env.image }} | jq -r '.config.digest')
         echo "DEBUG: IMAGE_DIGEST=$IMAGE_DIGEST"
         END_TIME=$(date +%s)
-        echo "DEBUG: Pulling the image took $((END_TIME - START_TIME)) seconds"
+        echo "DEBUG: Getting Digest took $((END_TIME - START_TIME)) seconds"
         echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
 
     - name: Docker Image Caching
