@@ -85,8 +85,7 @@ runs:
         echo "cache_file=$cache_file" >> $GITHUB_ENV
 
     - name: Docker Image Caching
-      id: docker-cache
-      uses: actions/cache@v3
+      uses: actions/cache/restore@v3
       with:
         path: ci/cache/docker
         key: ${{ env.cache_file }}.tar
@@ -148,3 +147,9 @@ runs:
         mkdir -p ci/cache/docker
         docker save ${{ env.image }} -o ci/cache/docker/${{ env.cache_file }}.tar
         ls -l ci/cache/docker
+
+    - uses: actions/cache/save@v3
+      if: always()
+      with:
+        path: ci/cache/docker
+        key: ${{ env.cache_file }}.tar
