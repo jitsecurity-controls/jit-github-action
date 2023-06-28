@@ -103,6 +103,11 @@ runs:
         END_TIME=$(date +%s)
         echo "DEBUG: Authenticating took $((END_TIME - START_TIME)) seconds"
         
+        echo DOCKER VERSION
+        docker --version
+        
+        docker manifest inspect ${{ env.image }} | jq
+        
         # Attempt to load docker image from cache
         START_TIME=$(date +%s)
         docker load -i ci/cache/docker/${{ env.FILENAME_TO_SAVE }}.tar || true
@@ -113,6 +118,8 @@ runs:
         docker pull ${{ env.image }}
         END_TIME=$(date +%s)
         echo "DEBUG: Pulling (only) the image took $((END_TIME - START_TIME)) seconds"
+        
+        docker manifest inspect ${{ env.image }} | jq
 
     - name: Run The Action
       if: always()
