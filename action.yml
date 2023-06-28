@@ -81,13 +81,15 @@ runs:
         IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
         echo Image to be used $IMAGE
         echo "image=$IMAGE" >> $GITHUB_ENV
+        FILENAME_TO_SAVE=$(sed 's/\//_/g' <<< "$IMAGE")
+        echo "FILENAME_TO_SAVE=$FILENAME_TO_SAVE" >> $GITHUB_ENV
 
     - name: Docker Image Caching
       id: docker-cache
       uses: actions/cache@v3
       with:
         path: ci/cache/docker
-        key: ${{ env.image }}.tar
+        key: ${{ env.FILENAME_TO_SAVE }}.tar
 
     - name: Login to docker registry
       shell: bash
@@ -130,5 +132,5 @@ runs:
       shell: bash
       run: |
         mkdir -p ci/cache/docker
-        docker save ${{ env.image }} > ci/cache/docker/${{ env.image }}.tar
+        docker save ${{ env.image }} -o ci/cache/docker/${{ env.FILENAME_TO_SAVE }}.tar
         ls -l ci/cache/docker
