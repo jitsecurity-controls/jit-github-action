@@ -104,7 +104,10 @@ runs:
         echo "DEBUG: Authenticating took $((END_TIME - START_TIME)) seconds"
         
         # Attempt to load docker image from cache
+        START_TIME=$(date +%s)
         docker load -i ci/cache/docker/${{ env.FILENAME_TO_SAVE }}.tar || true
+        END_TIME=$(date +%s)
+        echo "DEBUG: Loading from cache took $((END_TIME - START_TIME)) seconds"
         
         START_TIME=$(date +%s)
         docker pull ${{ env.image }}
