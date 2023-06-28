@@ -91,6 +91,13 @@ runs:
         ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login
         | docker login --username AWS --password-stdin registry.jit.io
 
+    - name: Docker Image Caching
+      id: docker-cache
+      uses: actions/cache@v3
+      with:
+        path: ci/cache/docker
+        key: ${{ env.image }}
+
     - name: Pull docker image
       shell: bash
       run: docker pull ${{ env.image }}
