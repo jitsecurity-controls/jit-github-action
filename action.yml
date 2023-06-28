@@ -133,6 +133,7 @@ runs:
 
     - name: Store image in cache directory
       shell: bash
+      if: always()
       run: |
         mkdir -p ci/cache/docker
         docker save ${{ env.image }} -o ci/cache/docker/${{ env.FILENAME_TO_SAVE }}.tar
