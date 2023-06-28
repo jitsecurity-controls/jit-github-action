@@ -82,15 +82,6 @@ runs:
         echo Image to be used $IMAGE
         echo "image=$IMAGE" >> $GITHUB_ENV
 
-    - name: Login to docker registry
-      shell: bash
-      run: >
-        curl
-        -X POST
-        -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}"
-        ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login
-        | docker login --username AWS --password-stdin registry.jit.io
-
     - name: Docker Image Caching
       id: docker-cache
       uses: actions/cache@v3
@@ -98,9 +89,22 @@ runs:
         path: ci/cache/docker
         key: ${{ env.image }}
 
-    - name: Pull docker image
+    - name: Login to docker registry
       shell: bash
-      run: docker pull ${{ env.image }}
+      run: |
+        START_TIME=$(date +%s)
+        curl \
+          -X POST \
+          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
+          | docker login --username AWS --password-stdin registry.jit.io
+        END_TIME=$(date +%s)
+        echo "DEBUG: Authenticating took $((END_TIME - START_TIME)) seconds"
+        
+        START_TIME=$(date +%s)
+        docker pull ${{ env.image }}
+        END_TIME=$(date +%s)
+        echo "DEBUG: Pulling (only) the image took $((END_TIME - START_TIME)) seconds"
 
     - name: Run The Action
       if: always()
