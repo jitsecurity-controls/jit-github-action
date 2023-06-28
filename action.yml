@@ -87,7 +87,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ci/cache/docker
-        key: ${{ env.image }}
+        key: ${{ env.image }}.tar
 
     - name: Login to docker registry
       shell: bash
@@ -125,3 +125,10 @@ runs:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
+
+    - name: Store image in cache directory
+      shell: bash
+      run: |
+        mkdir -p ci/cache/docker
+        docker save ${{ env.image }} > ci/cache/docker/${{ env.image }}.tar
+        ls -l ci/cache/docker
