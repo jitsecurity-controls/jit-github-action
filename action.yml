@@ -116,7 +116,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ci/cache/docker
-        key: ${{ env.cache_file }}@${{ env.digest }}.tar
+        restore-keys: ${{ env.cache_file }}@
 
     - name: Pull image
       shell: bash
