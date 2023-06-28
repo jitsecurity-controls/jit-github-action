@@ -123,8 +123,6 @@ runs:
         echo DOCKER VERSION
         docker --version
         
-        docker manifest inspect ${{ env.image }} | jq
-        
         # Attempt to load docker image from cache
         START_TIME=$(date +%s)
         docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar || true
@@ -136,8 +134,6 @@ runs:
         END_TIME=$(date +%s)
         echo "DEBUG: Pulling (only) the image took $((END_TIME - START_TIME)) seconds"
         
-        docker manifest inspect ${{ env.image }} | jq
-
     - name: Run The Action
       if: always()
       run: |
