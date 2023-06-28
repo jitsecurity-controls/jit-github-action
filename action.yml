@@ -120,21 +120,21 @@ runs:
         key: ${{ env.cache_file }}@${{ env.digest }}.tar
         restore-keys: ${{ env.cache_file }}@
 
+    - name: Load image from cache
+      shell: bash
+      run: |
+        # Check if any file was restored from the cache
+        RESTORED_FILE=$(ls "ci/cache/docker/${{ env.cache_file }}@*")
+        if [ -n "$RESTORED_FILE" ]; then
+          echo "DEBUG: Found cache file, loading from cache"
+          docker load -i $RESTORED_FILE
+        fi
+
     - name: Pull image
       shell: bash
       run: |
         echo DOCKER VERSION
         docker --version
-        
-        # Attempt to load docker image from cache
-        START_TIME=$(date +%s)
-        if [ -f ci/cache/docker/${{ env.cache_file }}@${{ env.digest }}.tar ]; then
-          echo "DEBUG: Found cache file, loading from cache"
-          docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.digest }}.tar
-        fi
-        
-        END_TIME=$(date +%s)
-        echo "DEBUG: Loading from cache took $((END_TIME - START_TIME)) seconds"
         
         START_TIME=$(date +%s)
         docker pull ${{ env.image }}
