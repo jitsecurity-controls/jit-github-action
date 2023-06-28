@@ -125,7 +125,11 @@ runs:
         
         # Attempt to load docker image from cache
         START_TIME=$(date +%s)
-        docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar || true
+        if [ -f ci/cache/docker/${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar ]; then
+          echo "DEBUG: Found cache file, loading from cache"
+          docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar
+        fi
+        
         END_TIME=$(date +%s)
         echo "DEBUG: Loading from cache took $((END_TIME - START_TIME)) seconds"
         
