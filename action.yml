@@ -81,14 +81,12 @@ runs:
         IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
         echo Image to be used $IMAGE
         echo "image=$IMAGE" >> $GITHUB_ENV
+        
+        
+        
         cache_file=$(sed 's/\//__/g' <<< "$IMAGE")  # replace / with __
         echo "cache_file=$cache_file" >> $GITHUB_ENV
 
-    - name: Docker Image Caching
-      uses: actions/cache/restore@v3
-      with:
-        path: ci/cache/docker
-        key: ${{ env.cache_file }}.tar
 
     - name: Login to docker registry
       shell: bash
@@ -101,7 +99,27 @@ runs:
           | docker login --username AWS --password-stdin registry.jit.io
         END_TIME=$(date +%s)
         echo "DEBUG: Authenticating took $((END_TIME - START_TIME)) seconds"
-        
+
+    - name: Get image digest
+      id: get-image-digest
+      shell: bash
+      run: |
+        START_TIME=$(date +%s)
+        IMAGE_DIGEST=$(docker manifest inspect ${{ env.image }} | jq -r '.config.digest')
+        echo "DEBUG: IMAGE_DIGEST=$IMAGE_DIGEST"
+        END_TIME=$(date +%s)
+        echo "DEBUG: Pulling the image took $((END_TIME - START_TIME)) seconds"
+        echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
+
+    - name: Docker Image Caching
+      uses: actions/cache@v3
+      with:
+        path: ci/cache/docker
+        key: ${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar
+
+    - name: Pull image
+      shell: bash
+      run: |
         echo DOCKER VERSION
         docker --version
         
@@ -109,7 +127,7 @@ runs:
         
         # Attempt to load docker image from cache
         START_TIME=$(date +%s)
-        docker load -i ci/cache/docker/${{ env.cache_file }}.tar || true
+        docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar || true
         END_TIME=$(date +%s)
         echo "DEBUG: Loading from cache took $((END_TIME - START_TIME)) seconds"
         
@@ -140,16 +158,10 @@ runs:
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
 
-    - name: Store image in cache directory
+    - name: Export image in cache directory
       shell: bash
       if: always()
       run: |
         mkdir -p ci/cache/docker
-        docker save ${{ env.image }} -o ci/cache/docker/${{ env.cache_file }}.tar
+        docker save ${{ env.image }} -o ci/cache/docker/${{ env.cache_file }}@${{ env.IMAGE_DIGEST }}.tar
         ls -l ci/cache/docker
-
-    - uses: actions/cache/save@v3
-      if: always()
-      with:
-        path: ci/cache/docker
-        key: ${{ env.cache_file }}.tar
