@@ -122,7 +122,7 @@ runs:
         key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
 
     - name: Load image from cache
-      if : ${{ steps.cache-docker-image.outputs.cache-hit == 'true' }}
+      if: steps.cache-docker-image.outputs.cache-hit == 'true'
       shell: bash
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
@@ -152,7 +152,7 @@ runs:
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
 
     - name: Save image in cache directory
-      if: always() && steps.cache-docker-image.outcome == 'success'
+      if: always() && steps.cache-docker-image.outputs.cache-hit == 'false'  # If the image was not in the cache, save it
       id: save-image
       shell: bash
       run: |
