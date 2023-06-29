@@ -87,7 +87,9 @@ runs:
     - name: Set cache_file value
       id: set-cache-file
       shell: bash
+      continue-on-error: true
       run: |
+        exit 1
         CACHE_FILE=$(sed 's/\//__/g' <<< "${{ steps.set-image.outputs.image }}")  # replace / with __ to avoid / interpreted as directory separator
         echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
