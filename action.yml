@@ -123,7 +123,7 @@ runs:
     - name: Load image from cache
       if : ${{ steps.cache-docker-image.outputs.cache-hit == 'true' }}
       shell: bash
-      continue-on-error: true
+#      continue-on-error: true
       run: |
         exit 1
         
