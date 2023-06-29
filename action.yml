@@ -119,7 +119,8 @@ runs:
       uses: actions/cache@v3
       with:
         path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
-        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
+#        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
+        key: null
 
     - name: Load image from cache
       if : ${{ steps.cache-docker-image.outputs.cache-hit == 'true' }}
