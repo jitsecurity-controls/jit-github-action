@@ -134,6 +134,7 @@ runs:
     - name: Run The Action
       if: always()
       run: |
+        echo "${{ toJSON(steps.cache-docker-image) }}"
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
@@ -152,7 +153,7 @@ runs:
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
 
     - name: Save image in cache directory
-      if: always() && steps.cache-docker-image.outputs.cache-hit == 'false'  # If the image was not in the cache, save it
+      if: always() && steps.cache-docker-image.outputs.cache-hit == false  # If the image was not in the cache, save it
       id: save-image
       shell: bash
       run: |
