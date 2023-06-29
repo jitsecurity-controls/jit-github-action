@@ -124,7 +124,7 @@ runs:
       shell: bash
       run: |
         # Check if any file was restored from the cache
-        RESTORED_FILE=$(ls "ci/cache/docker/${{ env.cache_file }}@*")
+        RESTORED_FILE=$(ls ci/cache/docker/${{ env.cache_file }}@*)
         if [ -n "$RESTORED_FILE" ]; then
           echo "DEBUG: Found cache file, loading from cache"
           docker load -i $RESTORED_FILE
