@@ -160,6 +160,11 @@ runs:
         mkdir -p ci/cache/docker
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
 
+    - name: Echo
+      shell: bash
+      run: |
+        echo "${{ toJSON(steps.save-image) }}"
+
     - uses: actions/cache/save@v3
       if: steps.save-image.conclusion == 'success'
       with:
