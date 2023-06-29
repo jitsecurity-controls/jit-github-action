@@ -119,8 +119,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
-#        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
-        key: null
+        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
 
     - name: Load image from cache
       if : ${{ steps.cache-docker-image.outputs.cache-hit == 'true' }}
@@ -154,11 +153,8 @@ runs:
 
     - name: Export image in cache directory
       shell: bash
-      if: always() && steps.cache-docker-image.conclusion == 'success'
+      if: always() && steps.cache-docker-image.outcome == 'success'
       run: |
-        echo ${{ steps.cache-docker-image.conclusion == 'success' }}
-        echo ${{ steps.cache-docker-image }}
-        echo ${{ toJSON(steps.cache-docker-image) }}
         mkdir -p ci/cache/docker
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
         ls -l ci/cache/docker
