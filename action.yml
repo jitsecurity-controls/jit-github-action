@@ -104,6 +104,7 @@ runs:
           | docker login --username AWS --password-stdin registry.jit.io
 
     - name: Get digest
+      if: ${{ steps.set-cache-file.outputs.cache_file != '' }}
       id: get-digest
       shell: bash
       continue-on-error: true  # We can still run the action even if the manifest doesn't exist
@@ -113,8 +114,10 @@ runs:
         echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
     - name: Docker Image Caching
-      uses: actions/cache@v3
+      if: ${{ steps.get-digest.outputs.digest != '' }}
       id: cache-docker-image
+      continue-on-error: true
+      uses: actions/cache@v3
       with:
         path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
         key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
