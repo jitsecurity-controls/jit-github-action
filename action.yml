@@ -117,7 +117,7 @@ runs:
       uses: actions/cache@v3
       id: cache-docker-image
       with:
-        path: ci/cache/docker
+        path: ci/cache/docker/${{ env.cache_file }}@${{ env.digest }}.tar
         key: ${{ env.cache_file }}@${{ env.digest }}.tar
 
     - name: Load image from cache
