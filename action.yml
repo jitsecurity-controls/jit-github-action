@@ -134,7 +134,6 @@ runs:
     - name: Run The Action
       if: always()
       run: |
-        echo "${{ toJSON(steps.cache-docker-image) }}"
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
@@ -159,12 +158,6 @@ runs:
       run: |
         mkdir -p ci/cache/docker
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
-
-    - name: Echo
-      if: always()
-      shell: bash
-      run: |
-        echo "${{ toJSON(steps.save-image) }}"
 
     - uses: actions/cache/save@v3
       if: always() && steps.save-image.conclusion == 'success'
