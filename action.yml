@@ -157,6 +157,8 @@ runs:
       if: always() && steps.cache-docker-image.conclusion == 'success'
       run: |
         echo ${{ steps.cache-docker-image.conclusion == 'success' }}
+        echo ${{ steps.cache-docker-image }}
+        echo ${{ toJSON(steps.cache-docker-image) }}
         mkdir -p ci/cache/docker
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.get-digest.outputs.digest }}.tar
         ls -l ci/cache/docker
