@@ -125,6 +125,8 @@ runs:
       shell: bash
       continue-on-error: true
       run: |
+        exit 1
+        
         echo Loading image from cache
         START_TIME=$(date +%s)
         docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.digest }}.tar
