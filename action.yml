@@ -74,44 +74,39 @@ runs:
         ref: main
         path: ./.github/actions/jit-github-action
 
-    # In order to test using ECR instead of ghcr, a temporary step is added to modify the source registry to ECR
+    # For backward compatability, manually modify the registry value to registry.jit.io
+    # TODO: Remove this step once we are fully migrated to registry.jit.io
     - name: Set image value
       shell: bash
       run: |
         IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
-        echo "IMAGE: $IMAGE"
+        echo "(info) IMAGE: $IMAGE"
         echo "image=$IMAGE" >> $GITHUB_ENV
 
     - name: Set cache_file value
       shell: bash
       run: |
         CACHE_FILE=$(sed 's/\//__/g' <<< "${{ env.image }}")  # replace / with __ to avoid / interpreted as directory separator
-        echo "CACHE_FILE: $CACHE_FILE" 
+        echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_ENV
 
     - name: Login to docker registry
       shell: bash
       run: |
-        START_TIME=$(date +%s)
         curl \
           -X POST \
           -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
           ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.jit.io
-        END_TIME=$(date +%s)
-        echo "DEBUG: Authenticating took $((END_TIME - START_TIME)) seconds"
 
     - name: Get digest
       id: get-digest
       shell: bash
       continue-on-error: true  # We can still run the action even if the manifest doesn't exist
       run: |
-        START_TIME=$(date +%s)
-        IMAGE_DIGEST=$(docker manifest inspect ${{ env.image }} | jq -r '.config.digest')
-        echo "IMAGE_DIGEST: $IMAGE_DIGEST"
-        END_TIME=$(date +%s)
-        echo "DEBUG: Getting Digest took $((END_TIME - START_TIME)) seconds"
-        echo "digest=$IMAGE_DIGEST" >> $GITHUB_ENV
+        DIGEST=$(docker manifest inspect ${{ env.image }} | jq -r '.config.digest')
+        echo "(info) DIGEST: $DIGEST"
+        echo "digest=$DIGEST" >> $GITHUB_ENV
 
     - name: Docker Image Caching
       uses: actions/cache@v3
@@ -124,24 +119,12 @@ runs:
       if : ${{ steps.cache-docker-image.outputs.cache-hit == 'true' }}
       shell: bash
       continue-on-error: true
-      run: |
-        echo Loading image from cache
-        START_TIME=$(date +%s)
-        docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.digest }}.tar
-        END_TIME=$(date +%s)
-        echo "DEBUG: Loading (only) the image took $((END_TIME - START_TIME)) seconds"
+      run: docker load -i ci/cache/docker/${{ env.cache_file }}@${{ env.digest }}.tar
 
     - name: Pull image
       shell: bash
-      run: |
-        echo DOCKER VERSION
-        docker --version
-        
-        START_TIME=$(date +%s)
-        docker pull ${{ env.image }}
-        END_TIME=$(date +%s)
-        echo "DEBUG: Pulling (only) the image took $((END_TIME - START_TIME)) seconds"
-        
+      run: docker pull ${{ env.image }}
+
     - name: Run The Action
       if: always()
       run: |
