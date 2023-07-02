@@ -167,7 +167,8 @@ runs:
       shell: bash
       run: |
         mkdir -p ci/cache/docker
-        DIGEST=$(docker images --digests --format "{{.Digest}}" --filter=reference=${{ steps.set-image.outputs.image }} | head -n 1)
+        docker images
+        DIGEST=$(docker images --digests --format "{{.Digest}}" --filter="reference=${{ steps.set-image.outputs.image }}" | head -n 1)
         echo "(info) DIGEST: $DIGEST"
         
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${DIGEST}.tar
