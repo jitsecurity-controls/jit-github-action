@@ -104,6 +104,7 @@ runs:
           | docker login --username AWS --password-stdin registry.jit.io
 
     - uses: actions/cache/restore@v3
+      if: steps.set-cache-file.outputs.cache_file != ''
       id: cache-docker-image
       continue-on-error: true
       with:
@@ -144,17 +145,29 @@ runs:
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
 
-    - name: Save image in cache directory
+    - name: Set image id
       if: always()
-      id: save-image
+      id: set-image-id
       shell: bash
       run: |
         IMAGE_ID=$(docker image inspect ${{ steps.set-image.outputs.image }} | jq -r '.[0].Id')
         echo "(info) IMAGE_ID: $IMAGE_ID"
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
-        
+
+    - name: Log
+      if: always()
+      shell: bash
+      run: |
+        echo "Condition print"
+        echo ${{ contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id) }}
+
+    - name: Save image in cache directory
+      if: always() && contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id)
+      id: save-image
+      shell: bash
+      run: |
         mkdir -p ci/cache/docker
-        docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${IMAGE_ID}.tar
+        docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
     - uses: actions/cache/save@v3
       if: always() && steps.save-image.conclusion == 'success'
