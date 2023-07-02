@@ -173,10 +173,11 @@ runs:
         echo "(info) IMAGE_ID: $IMAGE_ID"
         
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${IMAGE_ID}.tar
+        ls -al ci/cache/docker/
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
     - uses: actions/cache/save@v3
       if: always() && steps.save-image.conclusion == 'success'
       with:
-        path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.save-image.outputs.image_id }}.tar
+        path: ci/cache/docker/
         key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.save-image.outputs.image_id }}.tar
