@@ -168,14 +168,15 @@ runs:
       run: |
         mkdir -p ci/cache/docker
         docker images
-        DIGEST=$(docker images --digests --format "{{.Digest}}" --filter="reference=${{ steps.set-image.outputs.image }}" | head -n 1)
-        echo "(info) DIGEST: $DIGEST"
         
-        docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${DIGEST}.tar
-        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        IMAGE_ID=$(docker image inspect ${{ steps.set-image.outputs.image }} | jq -r '.[0].Id')
+        echo "(info) IMAGE_ID: $IMAGE_ID"
+        
+        docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${IMAGE_ID}.tar
+        echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
     - uses: actions/cache/save@v3
       if: always() && steps.save-image.conclusion == 'success'
       with:
-        path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.save-image.outputs.digest }}.tar
-        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.save-image.outputs.digest }}.tar
+        path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.save-image.outputs.image_id }}.tar
+        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.save-image.outputs.image_id }}.tar
