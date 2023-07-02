@@ -123,7 +123,7 @@ runs:
         restore-keys: ${{ steps.set-cache-file.outputs.cache_file }}@
 
     - name: Log above step
-      shell: bass
+      shell: bash
       run: |
         echo "(info) cache-docker-image: ${{ toJSON(steps.cache-docker-image) }}"
       
