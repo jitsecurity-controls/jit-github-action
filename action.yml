@@ -166,5 +166,5 @@ runs:
     - uses: actions/cache/save@v3
       if: always() && steps.save-image.conclusion == 'success'
       with:
-        path: ci/cache/docker/
+        path: ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
         key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
