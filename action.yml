@@ -31,8 +31,7 @@ inputs:
     default: true
   runner_setup:
     description: RunnerSetup dictionary
-    default: '{"checkout": true}'§
-
+    default: '{"checkout": true}'
 
 runs:
   using: "composite"
