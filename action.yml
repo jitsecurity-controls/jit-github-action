@@ -161,6 +161,11 @@ runs:
       shell: bash
       run: |
         mkdir -p ci/cache/docker
+        if [ -f ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }} ]
+        then
+          echo "(info) Removing old image from cache"
+          rm ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
+        fi
         docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
     - uses: actions/cache/save@v3
