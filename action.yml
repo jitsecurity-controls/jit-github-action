@@ -98,6 +98,7 @@ runs:
     - name: Run The Action
       if: always()
       run: |
+        echo ${{ secrets.ZAP_PASSWORD }}
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
         echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
