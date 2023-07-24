@@ -18,7 +18,7 @@ inputs:
   fail_on_findings:
     description: "fail control when finding is found"
     required: false
-    default: true
+    default: "true"
   runner_setup:
     description: RunnerSetup dictionary
     default: '{"checkout": true}'
