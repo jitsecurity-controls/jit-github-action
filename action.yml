@@ -8,9 +8,6 @@ inputs:
   security_control:
     description: "Docker image tag path of security control to execute"
     required: true
-  security_control_args:
-    description: "argument to pass to the security control"
-    required: false
   security_control_output_file:
     description: "path to the security control output"
     required: false
@@ -124,7 +121,7 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
-        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ steps.set-image.outputs.image }} -- ${{ inputs.security_control_args }}
+        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ steps.set-image.outputs.image }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
