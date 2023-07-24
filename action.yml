@@ -129,7 +129,7 @@ runs:
       if: always()
       run: |
         B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
-        echo "::add-mask::${GH_EVENT_JSON}"
+        echo "::add-mask::${{toJSON(github)}}"
         echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> /tmp/docker_env.txt
