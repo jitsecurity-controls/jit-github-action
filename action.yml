@@ -1,12 +1,6 @@
 name: 'Jit security-controls action'
 description: 'Runs a Jit security-control on a target dir'
 inputs:
-  docker_user:
-    description: 'user for docker registry'
-    required: true
-  docker_password:
-    description: 'password for docker registry'
-    required: true
   container_args:
     description: 'container additional args'
     required: false
