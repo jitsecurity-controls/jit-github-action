@@ -32,10 +32,6 @@ inputs:
   runner_setup:
     description: RunnerSetup dictionary
     default: '{"checkout": true}'
-  context:
-    description: Execution context
-    default: '{}'
-
 
 runs:
   using: "composite"
