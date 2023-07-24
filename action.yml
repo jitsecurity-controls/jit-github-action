@@ -126,6 +126,7 @@ runs:
       run: docker pull ${{ steps.set-image.outputs.image }}
 
     - name: Mask GH_EVENT_JSON
+      shell: bash
       run: echo "::add-mask::${{ toJSON(github) }}"
 
     - name: Run The Action
