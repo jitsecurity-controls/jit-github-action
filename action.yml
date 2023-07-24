@@ -21,10 +21,6 @@ inputs:
     description: "path to the security control output"
     required: false
     default: ""
-  dispatch_type:
-    description: "'workflow' or 'repository' (dispatch_type is deprecated and will be removed)"
-    required: false
-    default: "workflow"
   fail_on_findings:
     description: "fail control when finding is found"
     required: false
