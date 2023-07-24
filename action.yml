@@ -74,26 +74,56 @@ runs:
         ref: main
         path: ./.github/actions/jit-github-action
 
-    # In order to test using ECR instead of ghcr, a temporary step is added to modify the source registry to ECR
-    - name: Set docker image value
+    # For backward compatability, manually modify the registry value to registry.jit.io
+    # TODO: Remove this step once we are fully migrated to registry.jit.io
+    - name: Set image value
+      id: set-image
       shell: bash
       run: |
         IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
-        echo Image to be used $IMAGE
-        echo "image=$IMAGE" >> $GITHUB_ENV
+        echo "(info) IMAGE: $IMAGE"
+        echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+    # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
+    - name: Set cache_file value
+      id: set-cache-file
+      continue-on-error: true
+      shell: bash
+      run: |
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ steps.set-image.outputs.image }}")  # replace / with __ to avoid / interpreted as directory separator
+        echo "(info) CACHE_FILE: $CACHE_FILE" 
+        echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
     - name: Login to docker registry
       shell: bash
-      run: >
-        curl
-        -X POST
-        -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}"
-        ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login
-        | docker login --username AWS --password-stdin registry.jit.io
+      run: |
+        curl \
+          -X POST \
+          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
+          | docker login --username AWS --password-stdin registry.jit.io
 
-    - name: Pull docker image
+    - uses: actions/cache/restore@v3
+      if: steps.set-cache-file.outputs.cache_file != ''
+      id: cache-docker-image
+      continue-on-error: true
+      with:
+        path: ci/cache/docker/
+        # Instead of attempting to get a cache hit, we just attempt to load the last version of the image from the cache.
+        # If the image reference has updated, docker pull will verify that and pull the new version, then we will
+        # save the new version to the cache
+        key: 'null'
+        restore-keys: ${{ steps.set-cache-file.outputs.cache_file }}@
+
+    - name: Load image from cache
+      if: steps.cache-docker-image.outputs.cache-matched-key != ''
       shell: bash
-      run: docker pull ${{ env.image }}
+      continue-on-error: true
+      run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
+
+    - name: Pull image
+      shell: bash
+      run: docker pull ${{ steps.set-image.outputs.image }}
 
     - name: Run The Action
       if: always()
@@ -108,9 +138,38 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
-        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ env.image }} -- ${{ inputs.security_control_args }}
+        docker run --rm --env-file /tmp/docker_env.txt ${{ inputs.container_args }} ${{ fromJSON(github.event.inputs.client_payload).payload.control_env_vars }} -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit ${{ env.mount_original_repo_command }} ${{ steps.set-image.outputs.image }} -- ${{ inputs.security_control_args }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
         GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
+
+    - name: Set image id
+      if: always()
+      id: set-image-id
+      shell: bash
+      run: |
+        IMAGE_ID=$(docker image inspect ${{ steps.set-image.outputs.image }} | jq -r '.[0].Id')
+        echo "(info) IMAGE_ID: $IMAGE_ID"
+        echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
+
+    - name: Save image in cache directory
+      # next if condition verifies we update the cache only the image has changed (based on its id)
+      if: always() && !contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id)
+      id: save-image
+      shell: bash
+      run: |
+        mkdir -p ci/cache/docker
+        if [ -f ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }} ]
+        then
+          echo "(info) Removing old image from cache"
+          rm ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
+        fi
+        docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
+
+    - uses: actions/cache/save@v3
+      if: always() && steps.save-image.conclusion == 'success'
+      with:
+        path: ci/cache/docker/
+        key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
