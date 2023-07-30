@@ -32,13 +32,13 @@ runs:
       continue-on-error: true
       run: |
         echo "Linking job ID to Jit"
-        RUN_ID=${{ fromJSON(github.run_id) }}
-        JIT_EVENT_ID=${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}
-        EXECUTION_ID=${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }}
+        CI_RUN_ID=${{ fromJSON(github.run_id) }}
+        CI_JIT_EVENT_ID=${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}
+        CI_EXECUTION_ID=${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }}
         BODY=$( jq -n \
-                  --arg vendor_job_id "$RUN_ID" \
-                  --arg jit_event_id "$JIT_EVENT_ID" \
-                  --arg execution_id "$EXECUTION_ID" \
+                  --arg vendor_job_id "$CI_RUN_ID" \
+                  --arg jit_event_id "$CI_JIT_EVENT_ID" \
+                  --arg execution_id "$CI_EXECUTION_ID" \
                   '{vendor_job_id: $vendor_job_id, jit_event_id: $jit_event_id, execution_id: $execution_id}' )
         curl \
           -X POST \
