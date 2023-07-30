@@ -66,6 +66,7 @@ runs:
     - name: Checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
       continue-on-error: true
+      id: checkout-original-repo
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
       if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }}
       uses: actions/checkout@v3
@@ -75,6 +76,14 @@ runs:
         fetch-depth: 0
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         path: "code/"
+
+    - name: Ensure checkout failure is not fatal
+      # if checkout fails on non enrichment job, we can't continue
+      shell: bash
+      if: failure() &&  steps.checkout-original-repo.outcome == 'failure' && env.job == 'enrich'
+      run: |
+        echo "shtoot"
+        exit 1
 
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
