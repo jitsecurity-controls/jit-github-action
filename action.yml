@@ -32,7 +32,6 @@ runs:
       continue-on-error: true
       run: |
         DUDE=${{ fromJSON(github.event.inputs.client_payload).context.job }}
-        DUDE2=${{ fromJSON(env) }}
         echo "Linking job ID to Jit"
         CI_RUN_ID=${{ fromJSON(github.run_id) }}
         CI_JIT_EVENT_ID=${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}
