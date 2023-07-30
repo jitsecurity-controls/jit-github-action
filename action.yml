@@ -31,7 +31,6 @@ runs:
       shell: bash
       continue-on-error: true
       run: |
-        DUDE=${{ fromJSON(github.event.inputs.client_payload).context.job.job_name }}
         echo "Linking job ID to Jit"
         CI_RUN_ID=${{ fromJSON(github.run_id) }}
         CI_JIT_EVENT_ID=${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}
@@ -81,7 +80,7 @@ runs:
     - name: Ensure checkout failure is not fatal
       # if checkout fails on non enrichment job, we can't continue
       shell: bash
-      if: steps.checkout-original-repo.outcome == 'failure'
+      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).context.job.job_name == 'enrich'
       run: |
         echo "shtoot"
         exit 1
