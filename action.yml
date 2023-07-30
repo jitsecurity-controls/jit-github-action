@@ -77,12 +77,11 @@ runs:
         token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
         path: "code/"
 
-    - name: Ensure checkout failure is not fatal
-      # if checkout fails on non enrichment job, we can't continue
+    - name: Exit if checkout failure is fatal
       shell: bash
-      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).context.job.job_name == 'enrich'
+      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).context.job.job_name != 'enrich'
       run: |
-        echo "shtoot"
+        echo "Original repo checkout failed, can't continue job execution"
         exit 1
 
     - name: Check out jit-github-actions
