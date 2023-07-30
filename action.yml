@@ -27,6 +27,26 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Link job ID to Execution
+      shell: bash
+      continue-on-error: true
+      run: |
+        echo "Linking job ID to Jit"
+        CI_RUN_ID=${{ fromJSON(github.run_id) }}
+        CI_JIT_EVENT_ID=${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}
+        CI_EXECUTION_ID=${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }}
+        BODY=$( jq -n \
+                  --arg vendor_job_id "$CI_RUN_ID" \
+                  --arg jit_event_id "$CI_JIT_EVENT_ID" \
+                  --arg execution_id "$CI_EXECUTION_ID" \
+                  '{vendor_job_id: $vendor_job_id, jit_event_id: $jit_event_id, execution_id: $execution_id}' )
+        curl \
+          -X POST \
+          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          -H "Content-Type: application/json" \
+          -d "$BODY" \
+          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/execution/start
+
     - name: Set centralized_repo_files_location env var
       shell: bash
       env:
@@ -44,6 +64,8 @@ runs:
         path: ".jit/"
 
     - name: Checkout original repository
+      # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
+      continue-on-error: true
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
       if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }}
       uses: actions/checkout@v3
