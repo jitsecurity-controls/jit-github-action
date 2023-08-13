@@ -47,6 +47,7 @@ runs:
       run: |
         echo "Linking job ID to Jit"
         curl \
+          -s -o /dev/null -w "%{http_code}" \
           -X POST \
           -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.callback_token }}" \
           -H "Content-Type: application/json" \
