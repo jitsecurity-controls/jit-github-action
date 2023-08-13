@@ -56,7 +56,7 @@ runs:
                   '{vendor_job_id: $vendor_job_id, jit_event_id: $jit_event_id, execution_id: $execution_id}' )
         curl \
           -X POST \
-          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.callback_token }}" \
           -H "Content-Type: application/json" \
           -d "$BODY" \
           ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/execution/start
@@ -130,7 +130,7 @@ runs:
       run: |
         curl \
           -X POST \
-          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.callback_token }}" \
           ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.jit.io
 
