@@ -179,7 +179,8 @@ runs:
           ${{ inputs.container_args }} \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
-          ${{ steps.set-image.outputs.image }}
+          ${{ steps.set-image.outputs.image }} \
+          --execution-id "22891c68-f077-4288-8bad-097530f09f3d" --event-id "06bfad60-23fc-4ddd-88cb-f0ba689c41ff" --base-url "https://api.bandit.jitdev.io"
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
