@@ -82,7 +82,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ${{ github.repository }}
-        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
+        token: ${{ steps.oidc-auth.outputs.github_token }}
         ref: ''
         path: ".jit/"
 
@@ -97,7 +97,7 @@ runs:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         fetch-depth: 0
-        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
+        token: ${{ steps.oidc-auth.outputs.github_token }}
         path: "code/"
 
     - name: Exit if checkout failure is fatal
