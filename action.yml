@@ -61,15 +61,6 @@ runs:
         echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
         echo "callback_token=$(echo $AUTH_RESPONSE | jq -r '.callback_token')" >> $GITHUB_OUTPUT
 
-    - name: Print outputs
-      shell: bash
-      run: |
-        echo GITHUB_TOKEN
-        echo ${{ steps.oidc-auth.outputs.github_token }}
-        
-        echo CALLBACK_TOKEN
-        echo ${{ steps.oidc-auth.outputs.callback_token }}
-
     - name: Set centralized_repo_files_location env var
       shell: bash
       env:
