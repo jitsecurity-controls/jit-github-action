@@ -35,7 +35,7 @@ runs:
           -X POST \
           -H "Authorization: Bearer $OIDC_TOKEN" \
           --fail \
-          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/github/auth
+          ${{ fromJSON(github.event.inputs.client_payload).jit_base_api }}/github/auth
         )
         
         echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
@@ -53,15 +53,15 @@ runs:
           -H "Content-Type: application/json" \
           -d '{
                 "vendor_job_id": "${{ fromJSON(github.run_id) }}",
-                "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}",
-                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }}"
+                "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).jit_event_id }}",
+                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).execution_id }}"
           }' \
-          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/execution/start
+          ${{ fromJSON(github.event.inputs.client_payload).jit_base_api }}/execution/start
 
     - name: Set centralized_repo_files_location env var
       shell: bash
       env:
-        CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
+        CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).centralized_repo_files_location || '' }}
       run: |
         echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
         echo "CENTRALIZED_REPO_FILES_LOCATION_PATH=${PWD}/.jit/${CENTRALIZED_REPO_FILES_LOCATION}" >> $GITHUB_ENV
@@ -82,15 +82,15 @@ runs:
       if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }}
       uses: actions/checkout@v3
       with:
-        repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-        ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
+        repository: ${{ fromJSON(github.event.inputs.client_payload).full_repo_path }}
+        ref: ${{ fromJSON(github.event.inputs.client_payload).commits.head_sha }}
         fetch-depth: 0
         token: ${{ steps.oidc-auth.outputs.github_token }}
         path: "code/"
 
     - name: Exit if checkout failure is fatal
       shell: bash
-      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).context.job.job_name != 'enrich'
+      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).workflow_job_name != 'enrich'
       run: |
         echo "Original repo checkout failed, can't continue job execution"
         exit 1
@@ -128,7 +128,7 @@ runs:
         curl \
           -X POST \
           -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
-          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
+          ${{ fromJSON(github.event.inputs.client_payload).jit_base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.jit.io
 
     - uses: actions/cache/restore@v3
@@ -171,7 +171,7 @@ runs:
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
           ${{ steps.set-image.outputs.image }} \
-          --execution-id ${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }} --event-id ${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }} --base-url ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }} --jit-token ${{ steps.oidc-auth.outputs.jit_token }}
+          --execution-id ${{ fromJSON(github.event.inputs.client_payload).execution_id }} --event-id ${{ fromJSON(github.event.inputs.client_payload).jit_event_id }} --base-url ${{ fromJSON(github.event.inputs.client_payload).jit_base_api }} --jit-token ${{ steps.oidc-auth.outputs.jit_token }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
