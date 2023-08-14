@@ -39,7 +39,7 @@ runs:
         )
         
         echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
-        echo "callback_token=$(echo $AUTH_RESPONSE | jq -r '.callback_token')" >> $GITHUB_OUTPUT
+        echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
 
     - name: Link job ID to Execution
       shell: bash
@@ -49,7 +49,7 @@ runs:
         curl \
           -s -o /dev/null -w "%{http_code}" \
           -X POST \
-          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.callback_token }}" \
+          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
           -H "Content-Type: application/json" \
           -d '{
                 "vendor_job_id": "${{ fromJSON(github.run_id) }}",
@@ -127,7 +127,7 @@ runs:
       run: |
         curl \
           -X POST \
-          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.callback_token }}" \
+          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
           ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.jit.io
 
