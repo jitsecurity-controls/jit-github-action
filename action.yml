@@ -173,7 +173,8 @@ runs:
           ${{ inputs.container_args }} \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
-          ${{ steps.set-image.outputs.image }}
+          ${{ steps.set-image.outputs.image }} \
+          --execution-id ${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }} --event-id ${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }} --base-url ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }} --jit-token ${{ steps.oidc-auth.outputs.jit_token }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
