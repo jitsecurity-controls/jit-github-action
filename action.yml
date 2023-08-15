@@ -45,7 +45,7 @@ runs:
       shell: bash
       continue-on-error: true
       run: |
-        echo "Linking job ID to Jit"
+        echo "(info) Linking job ID to Jit"
         curl \
           -s -o /dev/null -w "%{http_code}" \
           -X POST \
@@ -92,7 +92,7 @@ runs:
       shell: bash
       if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).workflow_job_name != 'enrich'
       run: |
-        echo "Original repo checkout failed, can't continue job execution"
+        echo "(error) Original repo checkout failed, can't continue job execution"
         exit 1
 
     - name: Check out jit-github-actions
