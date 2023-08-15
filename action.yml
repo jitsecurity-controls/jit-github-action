@@ -27,25 +27,36 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - id: oidc-auth
+      shell: bash
+      run: |
+        OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
+        AUTH_RESPONSE=$(curl \
+          -X POST \
+          -H "Authorization: Bearer $OIDC_TOKEN" \
+          --fail \
+          ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
+        )
+        
+        echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
+        echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+
     - name: Link job ID to Execution
       shell: bash
       continue-on-error: true
       run: |
-        echo "Linking job ID to Jit"
-        CI_RUN_ID=${{ fromJSON(github.run_id) }}
-        CI_JIT_EVENT_ID=${{ fromJSON(github.event.inputs.client_payload).context.jit_event.jit_event_id }}
-        CI_EXECUTION_ID=${{ fromJSON(github.event.inputs.client_payload).execution_data.execution_id }}
-        BODY=$( jq -n \
-                  --arg vendor_job_id "$CI_RUN_ID" \
-                  --arg jit_event_id "$CI_JIT_EVENT_ID" \
-                  --arg execution_id "$CI_EXECUTION_ID" \
-                  '{vendor_job_id: $vendor_job_id, jit_event_id: $jit_event_id, execution_id: $execution_id}' )
+        echo "(info) Linking job ID to Jit"
         curl \
+          -s -o /dev/null -w "%{http_code}" \
           -X POST \
-          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
+          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
           -H "Content-Type: application/json" \
-          -d "$BODY" \
-          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/execution/start
+          -d '{
+                "vendor_job_id": "${{ fromJSON(github.run_id) }}",
+                "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
+                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
+          }' \
+          ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/execution/start
 
     - name: Set centralized_repo_files_location env var
       shell: bash
@@ -59,7 +70,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ${{ github.repository }}
-        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
+        token: ${{ steps.oidc-auth.outputs.github_token }}
         ref: ''
         path: ".jit/"
 
@@ -74,14 +85,14 @@ runs:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         fetch-depth: 0
-        token: ${{ fromJSON(github.event.inputs.client_payload).payload.github_token }}
+        token: ${{ steps.oidc-auth.outputs.github_token }}
         path: "code/"
 
     - name: Exit if checkout failure is fatal
       shell: bash
-      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).context.job.job_name != 'enrich'
+      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
       run: |
-        echo "Original repo checkout failed, can't continue job execution"
+        echo "(error) Original repo checkout failed, can't continue job execution"
         exit 1
 
     - name: Check out jit-github-actions
@@ -106,8 +117,8 @@ runs:
       run: |
         curl \
           -X POST \
-          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_token }}" \
-          ${{ fromJSON(github.event.inputs.client_payload).operational_data.callback_urls.base_api }}/authentication/registry/login \
+          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
+          ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/authentication/registry/login \
           | docker login --username AWS --password-stdin registry.jit.io
 
     - uses: actions/cache/restore@v3
@@ -135,10 +146,7 @@ runs:
     - name: Run The Action
       if: always()
       run: |
-        B64_ENCODED_GITHUB_EVENT=$(echo $GH_EVENT_JSON | base64)
-        echo "Encoded GITHUB EVENT with base64"
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
-        echo GITHUB_EVENT=$B64_ENCODED_GITHUB_EVENT >> /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
         if [ ${{ inputs.security_control_output_file }} != "" ]
@@ -153,11 +161,14 @@ runs:
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
           ${{ inputs.security_control }}
+          --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
+          --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
+          --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
+          --jit-token ${{ steps.oidc-auth.outputs.jit_token }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
-        GH_EVENT_JSON: ${{ toJSON(github) }} # https://github.com/actions/runner/issues/1656#issuecomment-1030077729
 
     - name: Set image id
       if: always()
@@ -169,7 +180,7 @@ runs:
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
     - name: Save image in cache directory
-      # next if condition verifies we update the cache only the image has changed (based on its id)
+      # next if condition verifies we update the cache only if the image has changed (based on its id)
       if: always() && !contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id)
       id: save-image
       shell: bash
