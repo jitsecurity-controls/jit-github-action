@@ -32,6 +32,9 @@ runs:
           -X POST \
           -H "Authorization: Bearer $OIDC_TOKEN" \
           --fail \
+          -d '{
+                "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}"
+          }' \
           ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
         
