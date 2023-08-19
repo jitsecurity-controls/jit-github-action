@@ -102,23 +102,13 @@ runs:
         ref: main
         path: ./.github/actions/jit-github-action
 
-    # For backward compatability, manually modify the registry value to registry.jit.io
-    # TODO: Remove this step once we are fully migrated to registry.jit.io
-    - name: Set image value
-      id: set-image
-      shell: bash
-      run: |
-        IMAGE=$(sed "s/ghcr.io\/jitsecurity-controls/registry.jit.io/g" <<< "${{ inputs.security_control }}")
-        echo "(info) IMAGE: $IMAGE"
-        echo "image=$IMAGE" >> $GITHUB_OUTPUT
-
     # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
     - name: Set cache_file value
       id: set-cache-file
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ steps.set-image.outputs.image }}")  # replace / with __ to avoid / interpreted as directory separator
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ inputs.security_control }}")  # replace / with __ to avoid / interpreted as directory separator
         echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
@@ -151,7 +141,7 @@ runs:
 
     - name: Pull image
       shell: bash
-      run: docker pull ${{ steps.set-image.outputs.image }}
+      run: docker pull ${{ inputs.security_control }}
 
     - name: Run The Action
       if: always()
@@ -170,7 +160,7 @@ runs:
           ${{ inputs.container_args }} \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
-          ${{ steps.set-image.outputs.image }} \
+          ${{ inputs.security_control }}
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
@@ -185,7 +175,7 @@ runs:
       id: set-image-id
       shell: bash
       run: |
-        IMAGE_ID=$(docker image inspect ${{ steps.set-image.outputs.image }} | jq -r '.[0].Id')
+        IMAGE_ID=$(docker image inspect ${{ inputs.security_control }} | jq -r '.[0].Id')
         echo "(info) IMAGE_ID: $IMAGE_ID"
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
@@ -201,7 +191,7 @@ runs:
           echo "(info) Removing old image from cache"
           rm ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
         fi
-        docker save ${{ steps.set-image.outputs.image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
+        docker save ${{ inputs.security_control }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
     - uses: actions/cache/save@v3
       if: always() && steps.save-image.conclusion == 'success'
