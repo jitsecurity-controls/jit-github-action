@@ -101,6 +101,8 @@ runs:
         git log --oneline
         git log 8c92b35ed8a18190839fa200d08359fbbc3bd26e -p
         git log 14f06655f49d5130e53079ff123beaf4d5f84e05 -p
+        echo "git diff.."
+        git diff 14f06655f49d5130e53079ff123beaf4d5f84e05 707922e02966fffbfe3607833bafca40bda7a916
 
     - name: Exit if checkout failure is fatal
       shell: bash
