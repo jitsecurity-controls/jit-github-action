@@ -32,6 +32,9 @@ runs:
           -X POST \
           -H "Authorization: Bearer $OIDC_TOKEN" \
           --fail \
+          -d '{
+                "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}"
+          }' \
           ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
         
@@ -157,7 +160,7 @@ runs:
           ${{ inputs.container_args }} \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
-          ${{ inputs.security_control }}
+          ${{ inputs.security_control }} \
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
