@@ -16,9 +16,6 @@ inputs:
     description: "fail control when finding is found"
     required: false
     default: "true"
-  runner_setup:
-    description: RunnerSetup dictionary
-    default: '{"checkout": true}'
   inline_environment:
     description: "inline environment variables to be passed to the container"
     required: false
@@ -79,7 +76,7 @@ runs:
       continue-on-error: true
       id: checkout-original-repo
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
-      if: ${{ ((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))  }}
+      if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
       uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -168,7 +165,7 @@ runs:
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
-        mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(inputs.runner_setup)) || (fromJSON(inputs.runner_setup).checkout == true)))] }}
+        mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
 
     - name: Set image id
       if: always()
