@@ -36,7 +36,7 @@ runs:
                 "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
                 "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}",
                 "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
-                "vendor_job_id": "${{ fromJSON(github.run_id) }}"
+                "run_id": "${{ fromJSON(github.run_id) }}"
           }' \
           ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
