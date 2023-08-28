@@ -33,32 +33,16 @@ runs:
           -H "Authorization: Bearer $OIDC_TOKEN" \
           --fail \
           -d '{
-                "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
                 "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
-                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
+                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}",
+                "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
+                "vendor_job_id": "${{ fromJSON(github.run_id) }}"
           }' \
           ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
         
         echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
         echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-
-    - name: Link job ID to Execution
-      shell: bash
-      continue-on-error: true
-      run: |
-        echo "(info) Linking job ID to Jit"
-        curl \
-          -s -o /dev/null -w "%{http_code}" \
-          -X POST \
-          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-                "vendor_job_id": "${{ fromJSON(github.run_id) }}",
-                "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
-                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
-          }' \
-          ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/execution/start
 
     - name: Set centralized_repo_files_location env var
       shell: bash
