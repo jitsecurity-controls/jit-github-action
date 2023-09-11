@@ -155,6 +155,10 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
+        
+        echo Failing...
+        exit 1
+        
         docker run \
           --rm \
           ${{ inputs.inline_environment }} \
