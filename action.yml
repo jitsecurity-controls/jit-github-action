@@ -44,14 +44,15 @@ runs:
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
           )
           response_code=${AUTH_RESPONSE: -3}
-          response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
+          if [ response_code -eq 200 ]; then
+            response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
+            echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
+            echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+          fi
           if [ response_code -eq 503 ]; then
             echo "Got 503 from githubservice, failing the step"
             exit 1
           fi
-          
-          echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
-          echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
 
     - name: Link job ID to Execution
       shell: bash
