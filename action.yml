@@ -25,23 +25,27 @@ runs:
   using: "composite"
   steps:
     - id: oidc-auth
-      shell: bash
-      run: |
-        OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
-        AUTH_RESPONSE=$(curl \
-          -X POST \
-          -H "Authorization: Bearer $OIDC_TOKEN" \
-          --fail \
-          -d '{
-                "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
-                "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
-                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
-          }' \
-          ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
-        )
-        
-        echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
-        echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+      uses: nick-fields/retry@v2
+      with:
+        timeout_seconds: 30
+        max_attempts: 3
+        shell: bash
+        command: |
+          OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
+          AUTH_RESPONSE=$(curl \
+            -X POST \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            --fail \
+            -d '{
+                  "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
+                  "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
+                  "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
+            }' \
+            ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
+          )
+          
+          echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
+          echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
 
     - name: Link job ID to Execution
       shell: bash
