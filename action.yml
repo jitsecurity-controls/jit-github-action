@@ -43,6 +43,10 @@ runs:
             }' \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
           )
+          if [ $? -eq 22 ]; then
+            echo "The return code is 22, exiting with status 1."
+            exit 1
+          fi
           
           echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
