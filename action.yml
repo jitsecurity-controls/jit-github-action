@@ -35,21 +35,23 @@ runs:
           AUTH_RESPONSE=$(curl \
             -X POST \
             -H "Authorization: Bearer $OIDC_TOKEN" \
-            --fail \
             -d '{
                   "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
                   "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
                   "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
             }' \
+            -s -w %{http_code}
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
           )
-          if [ $? -eq 22 ]; then
-            echo "The return code is 22, exiting with status 1."
+          response_code=${AUTH_RESPONSE: -3}
+          response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
+          if [ response_code -eq 503 ]; then
+            echo "Got 503 from githubservice, failing the step"
             exit 1
           fi
           
-          echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
-          echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+          echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
+          echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
 
     - name: Link job ID to Execution
       shell: bash
