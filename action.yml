@@ -51,7 +51,10 @@ runs:
           fi
           if [ $response_code = "503" ]; then
             echo "Got 503 from githubservice, failing the step"
-            exit 1
+            exit 22
+          else
+            echo "Got status_code $response_code"
+            exit 22
           fi
 
     - name: Link job ID to Execution
