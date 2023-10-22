@@ -50,7 +50,7 @@ runs:
             response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
             echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
             echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-            echo "has_tokens=true"
+            echo "has_tokens=true" >> $GITHUB_OUTPUT
           elif [ "$response_code" -eq 503 ]; then
             echo "Response code is 503. Retrying"
             exit 1
