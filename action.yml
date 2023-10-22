@@ -45,6 +45,8 @@ runs:
           )
           response_code=${AUTH_RESPONSE: -3}
           echo "Got status_code $response_code"
+          echo "github_token=0" >> $GITHUB_OUTPUT
+          echo "jit_token=0" >> $GITHUB_OUTPUT
           if [ $response_code = "200" ]; then
             response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
             echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
@@ -56,7 +58,7 @@ runs:
 
     - name: Verify we have tokens
       shell: bash
-      if: steps.oidc-auth.github_token && steps.oidc-auth.jit_token
+      if: steps.oidc-auth.github_token == 0 || steps.oidc-auth.jit_token == 0
       run: |
         exit 1
 
