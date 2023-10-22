@@ -58,7 +58,7 @@ runs:
 
     - name: Verify we have tokens
       shell: bash
-      if: steps.oidc-auth.has_tokens == 0
+      if: steps.oidc-auth.has_tokens == "false"
       run: |
         exit 99
 
