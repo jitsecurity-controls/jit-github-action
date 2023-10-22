@@ -51,10 +51,10 @@ runs:
             echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
             echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
             echo "has_tokens=1" >> $GITHUB_OUTPUT
-          elif [ "$response_code" -eq 503 ] || [ "$response_code" -eq 504 ]; then
-            # service unavailable, gateway timeout
+          elif [ "$response_code" -eq 502 ] || [ "$response_code" -eq 503 ] || [ "$response_code" -eq 504 ]; then
+            # bad gateway, service unavailable, gateway timeout
             echo "Response code is retryable - retrying"
-            exit 1
+            exit 100
           fi
 
     - name: Verify we have tokens
@@ -115,7 +115,7 @@ runs:
       if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
       run: |
         echo "(error) Original repo checkout failed, can't continue job execution"
-        exit 1
+        exit 101
 
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
