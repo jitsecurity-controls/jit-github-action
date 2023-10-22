@@ -202,7 +202,7 @@ runs:
 
     - name: Save image in cache directory
       # next if condition verifies we update the cache only if the image has changed (based on its id)
-      if: !contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id)
+      if: (!contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id))
       id: save-image
       shell: bash
       run: |
