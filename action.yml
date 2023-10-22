@@ -193,7 +193,7 @@ runs:
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
 
     - name: Set image id
-      if: always()
+      if: always() && steps.oidc-auth.has_tokens == 1
       id: set-image-id
       shell: bash
       run: |
