@@ -49,10 +49,8 @@ runs:
             response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
             echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
             echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-          fi
-          if [ $response_code = "503" ]; then
-            echo "Got 503 from githubservice, failing the step"
-            exit 22
+          else
+            exit $response_code
           fi
 
     - name: Link job ID to Execution
