@@ -162,7 +162,6 @@ runs:
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
 
     - name: Pull image
-      id: pull-image
       shell: bash
       run: docker pull ${{ inputs.security_control }}
 
@@ -194,7 +193,6 @@ runs:
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
 
     - name: Set image id
-      if: steps.pull-image.conclusion == 'success'
       id: set-image-id
       shell: bash
       run: |
