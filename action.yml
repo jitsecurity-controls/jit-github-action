@@ -49,9 +49,16 @@ runs:
             response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
             echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
             echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-          else
-            exit $response_code
+          elif [ "$response_code" -eq 503 ]; then
+            echo "Response code is 503. Retrying"
+            exit 1
           fi
+
+    - name: Verify we have tokens
+      shell: bash
+      if: steps.oidc-auth.github_token && steps.oidc-auth.jit_token
+      run: |
+        exit 1
 
     - name: Link job ID to Execution
       shell: bash
