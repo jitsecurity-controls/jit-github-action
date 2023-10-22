@@ -27,21 +27,28 @@ runs:
     - id: oidc-auth
       shell: bash
       run: |
-        OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
-        AUTH_RESPONSE=$(curl \
-          -X POST \
-          -H "Authorization: Bearer $OIDC_TOKEN" \
-          --fail \
-          -d '{
-                "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
-                "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
-                "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
-          }' \
-          ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
-        )
-        
-        echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
-        echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+        if command -v python > /dev/null 2>&1; then
+          pip install requests
+          python oidc_auth.py
+          echo "github_token=$OIDC_RESULT_GITHUB_TOKEN" >> $GITHUB_OUTPUT
+          echo "jit_token=$OIDC_RESULT_JIT_TOKEN" >> $GITHUB_OUTPUT
+        else
+          OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
+          AUTH_RESPONSE=$(curl \
+            -X POST \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            --fail \
+            -d '{
+                  "target_repo": "${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}",
+                  "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
+                  "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
+            }' \
+            ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
+          )
+          
+          echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
+          echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+        fi
 
     - name: Link job ID to Execution
       shell: bash
