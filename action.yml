@@ -51,8 +51,9 @@ runs:
             echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
             echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
             echo "has_tokens=true" >> $GITHUB_OUTPUT
-          elif [ "$response_code" -eq 503 ]; then
-            echo "Response code is 503. Retrying"
+          elif [ "$response_code" -eq 503 ] || [ "$response_code" -eq 504 ]; then
+            # service unavailable, gateway timeout
+            echo "Response code is retryable - retrying"
             exit 1
           fi
 
