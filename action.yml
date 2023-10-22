@@ -59,7 +59,7 @@ runs:
 
     - name: Verify we have tokens
       shell: bash
-      if: steps.oidc-auth.has_tokens == 0
+      if: steps.oidc-auth.outputs.has_tokens == 0
       run: |
         exit 99
 
@@ -166,7 +166,7 @@ runs:
       run: docker pull ${{ inputs.security_control }}
 
     - name: Run The Action
-      if: always() && steps.oidc-auth.has_tokens == 1
+      if: always() && steps.oidc-auth.outputs.has_tokens == 1
       run: |
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
@@ -193,7 +193,7 @@ runs:
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
 
     - name: Set image id
-      if: always() && steps.oidc-auth.has_tokens == 1
+      if: always() && steps.oidc-auth.outputs.has_tokens == 1
       id: set-image-id
       shell: bash
       run: |
