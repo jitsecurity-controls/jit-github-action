@@ -25,7 +25,7 @@ runs:
   using: "composite"
   steps:
     - id: oidc-auth
-      uses: nick-fields/retry@v2
+      uses: nick-fields/retry@v2.9.0
       with:
         timeout_seconds: 30
         max_attempts: 3
