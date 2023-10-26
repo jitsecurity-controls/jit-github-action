@@ -35,19 +35,17 @@ runs:
             while [[ $retries -lt $MAX_RETRIES ]]; do
                 response=$(curl -s -w "%{http_code}" "$@")
                 status_code=$(echo "$response" | tail -n1)  # Extract the status code from the response
-                echo "Retry: $retries"
-                echo "Status Code: $status_code"
                 # Check if the status code is one of the ones you want to retry on
                 if [[ $status_code != 503 && $status_code != 502 && $status_code != 504 ]]; then
                     # If status code is not one of 503, 502, 504, then break and don't retry
-                    echo "${response%$status_code}"
+                    echo "$response"
                     return
                 fi
         
                 ((retries++))
                 sleep 1  # Wait for a second before retrying
             done
-            echo "${response%$status_code}"  # If the loop finishes, return the last response
+            echo "$response"  # If the loop finishes, return the last response
         }
         
         OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
