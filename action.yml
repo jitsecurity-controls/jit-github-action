@@ -64,7 +64,7 @@ runs:
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
         
-        if [ $response_code = "200" ]; then
+        if [ $response_code = 200 ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
