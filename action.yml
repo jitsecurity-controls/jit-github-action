@@ -30,6 +30,9 @@ runs:
         MAX_RETRIES=3
         # Function to retry a curl command
         retry_curl() {
+            echo "!!!!!!"
+            echo $@
+            echo "!!!!!"
             local retries=0
             local response=""
             while [[ $retries -lt $MAX_RETRIES ]]; do
