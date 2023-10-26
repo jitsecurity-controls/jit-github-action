@@ -68,7 +68,7 @@ runs:
             }' \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
-
+        echo moshiko2
         echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
         echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
 
