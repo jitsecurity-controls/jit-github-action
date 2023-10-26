@@ -73,12 +73,6 @@ runs:
           exit 100
         fi
 
-    - name: Verify we have tokens
-      shell: bash
-      if: steps.oidc-auth.outputs.has_tokens == 0
-      run: |
-        exit 99
-
     - name: Link job ID to Execution
       shell: bash
       continue-on-error: true
