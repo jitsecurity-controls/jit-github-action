@@ -25,14 +25,36 @@ runs:
   using: "composite"
   steps:
     - id: oidc-auth
-      uses: nick-fields/retry@v2.9.0
-      with:
-        timeout_seconds: 30
-        max_attempts: 3
-        shell: bash
-        command: |
-          OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
-          AUTH_RESPONSE=$(curl \
+      shell: bash
+      command: |
+        MAX_RETRIES=3
+        # Function to retry a curl command
+        retry_curl() {
+            local retries=0
+            local response=""
+            while [[ $retries -lt $MAX_RETRIES ]]; do
+                response=$(curl -s -w "%{http_code}" "$@")
+                status_code=$(echo "$response" | tail -n1)  # Extract the status code from the response
+        
+                # Check if the status code is one of the ones you want to retry on
+                if [[ $status_code != 503 && $status_code != 502 && $status_code != 504 ]]; then
+                    # If status code is not one of 503, 502, 504, then break and don't retry
+                    echo "$response"
+                    return
+                fi
+        
+                ((retries++))
+                sleep 1  # Wait for a second before retrying
+            done
+            echo "$response"  # If the loop finishes, return the last response
+        }
+        
+        # Use the retry function for your curl commands
+        
+        OIDC_TOKEN_JSON=$(retry_curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL")
+        OIDC_TOKEN=$(echo "$OIDC_TOKEN_JSON" | jq -r '.value')
+        
+        AUTH_RESPONSE=$(retry_curl \
             -X POST \
             -H "Authorization: Bearer $OIDC_TOKEN" \
             -d '{
@@ -40,22 +62,11 @@ runs:
                   "jit_event_id": "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
                   "execution_id": "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}"
             }' \
-            -s -w %{http_code} \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
-          )
-          response_code=${AUTH_RESPONSE: -3}
-          echo "Got status_code $response_code"
-          echo "has_tokens=0" >> $GITHUB_OUTPUT
-          if [ $response_code = "200" ]; then
-            response_body=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
-            echo "github_token=$(echo $response_body | jq -r '.github_token')" >> $GITHUB_OUTPUT
-            echo "jit_token=$(echo $response_body | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-            echo "has_tokens=1" >> $GITHUB_OUTPUT
-          elif [ "$response_code" -eq 502 ] || [ "$response_code" -eq 503 ] || [ "$response_code" -eq 504 ]; then
-            # bad gateway, service unavailable, gateway timeout
-            echo "Response code is retryable - retrying"
-            exit 100
-          fi
+        )
+
+        echo "github_token=$(echo $AUTH_RESPONSE | jq -r '.github_token')" >> $GITHUB_OUTPUT
+        echo "jit_token=$(echo $AUTH_RESPONSE | jq -r '.jit_token')" >> $GITHUB_OUTPUT
 
     - name: Verify we have tokens
       shell: bash
