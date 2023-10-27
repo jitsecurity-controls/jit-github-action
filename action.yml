@@ -41,7 +41,8 @@ runs:
                     echo "$response"
                     return
                 fi
-        
+                
+                echo "Attempt #$(($retries + 1)) returned status code: $status_code" >&2
                 ((retries++))
                 sleep 1  # Wait for a second before retrying
             done
