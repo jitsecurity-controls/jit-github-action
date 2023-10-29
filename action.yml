@@ -31,6 +31,7 @@ runs:
         # Function to retry a curl command
         retry_curl() {
             local retries=0
+            local base_retry_delay=3
             local response=""
             while [[ $retries -lt $MAX_RETRIES ]]; do
                 response=$(curl -s -w "%{http_code}" "$@")
@@ -42,9 +43,10 @@ runs:
                     return
                 fi
                 
-                echo "Attempt #$(($retries + 1)) returned status code: $status_code" >&2
                 ((retries++))
-                sleep 1  # Wait for a second before retrying
+                retry_delay=$(($base_retry_delay**$retries))
+                echo "Attempt #$(($retries)) returned status code: $status_code. Sleeping for $retry_delay" >&2
+                sleep $retry_delay
             done
             echo "$response"  # If the loop finishes, return the last response
         }
