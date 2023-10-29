@@ -47,7 +47,7 @@ runs:
                 echo "Attempt #$(($retries)) returned status code: $status_code" >&2
                 if [[ $retries -lt $MAX_RETRIES ]]; then
                   retry_delay=$(($base_retry_delay**$retries))
-                  echo "Sleeping for $retry_delay" >&2
+                  echo "Sleeping for $retry_delay seconds" >&2
                   sleep $retry_delay
                 fi
             done
