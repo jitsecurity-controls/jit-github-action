@@ -24,16 +24,17 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Check out jit-github-actions
+      uses: actions/checkout@v3
+      with:
+        repository: jitsecurity-controls/jit-github-action
+        ref: main
+        path: ./.github/actions/jit-github-action
+
     - id: oidc-auth
       shell: bash
       run: |
-        ls -la
-        pwd
-        ls -la ..
-        ls -la ../..
-        ls -la ../../..
-        ls -la ../../../
-        ls -la ../../../..
+        source ./.github/actions/jit-github-action/retry-curl.sh
         OIDC_TOKEN_RESPONSE=$(retry_curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL")
         OIDC_TOKEN_RESPONSE_CODE=${OIDC_TOKEN_RESPONSE: -3}
         echo "Calling Github OIDC Auth endpoint returned with response_code=$OIDC_TOKEN_RESPONSE_CODE"
@@ -122,13 +123,6 @@ runs:
       run: |
         echo "(error) Original repo checkout failed, can't continue job execution"
         exit 102
-
-    - name: Check out jit-github-actions
-      uses: actions/checkout@v3
-      with:
-        repository: jitsecurity-controls/jit-github-action
-        ref: main
-        path: ./.github/actions/jit-github-action
 
     # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
     - name: Set cache_file value
