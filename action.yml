@@ -28,7 +28,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: jitsecurity-controls/jit-github-action
-        ref: main
+        ref: sc-21365-jit-github-action-retry-on-github-errors
         path: ./.github/actions/jit-github-action
 
     - id: oidc-auth
