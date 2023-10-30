@@ -60,7 +60,7 @@ runs:
         
         if [ $OIDC_TOKEN_RESPONSE_CODE = 200 ]; then
           OIDC_TOKEN_RESPONSE_BODY=${OIDC_TOKEN_RESPONSE:0:${#OIDC_TOKEN_RESPONSE}-3}
-          OIDC_TOKEN=$(OIDC_TOKEN_RESPONSE_BODY | jq -r '.value')
+          OIDC_TOKEN=$(echo $OIDC_TOKEN_RESPONSE_BODY | jq -r '.value')
         else
           echo "Got fatal error when calling github auth oidc token with jit server"
           exit 100
