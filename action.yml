@@ -54,7 +54,18 @@ runs:
             echo "$response"  # If the loop finishes, return the last response
         }
         
-        OIDC_TOKEN=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -r '.value')
+        OIDC_TOKEN_RESPONSE=$(retry_curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL")
+        OIDC_TOKEN_RESPONSE_CODE=${AUTH_RESPONSE: -3}
+        echo "Calling Github OIDC Auth endpoint returned with response_code=$OIDC_TOKEN_RESPONSE_CODE"
+        
+        if [ $OIDC_TOKEN_RESPONSE_CODE = 200 ]; then
+          OIDC_TOKEN_RESPONSE_BODY=${OIDC_TOKEN_RESPONSE:0:${#OIDC_TOKEN_RESPONSE}-3}
+          OIDC_TOKEN=$(OIDC_TOKEN_RESPONSE_BODY | jq -r '.value')
+        else
+          echo "Got fatal error when calling github auth oidc token with jit server"
+          exit 100
+        fi
+        
         AUTH_RESPONSE=$(retry_curl \
             -X POST \
             -H "Authorization: Bearer $OIDC_TOKEN" \
@@ -75,7 +86,7 @@ runs:
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
         else
           echo "Got fatal error when calling auth oidc token with jit server"
-          exit 100
+          exit 101
         fi
 
     - name: Link job ID to Execution
@@ -130,7 +141,7 @@ runs:
       if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
       run: |
         echo "(error) Original repo checkout failed, can't continue job execution"
-        exit 101
+        exit 102
 
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
