@@ -35,6 +35,7 @@ runs:
             local response=""
             while [[ $retries -lt $MAX_RETRIES ]]; do
                 response=$(curl -s -w "%{http_code}" "$@")
+                echo "$response" >&2
                 status_code=${response: -3}  # Extract the status code from the response
                 # Check if the status code is one of the ones you want to retry on
                 if [[ $status_code != 503 && $status_code != 502 && $status_code != 504 ]]; then
@@ -55,6 +56,7 @@ runs:
         }
         
         OIDC_TOKEN_RESPONSE=$(retry_curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL")
+        echo $OIDC_TOKEN_RESPONSE
         OIDC_TOKEN_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling Github OIDC Auth endpoint returned with response_code=$OIDC_TOKEN_RESPONSE_CODE"
         
