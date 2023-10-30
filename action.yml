@@ -34,7 +34,10 @@ runs:
     - id: oidc-auth
       shell: bash
       run: |
-        source $GITHUB_WORKSPACE/.github/actions/jit-github-action/retry-curl.sh
+        ls -la
+        ls -la ..
+        ls -la ../..
+        source ./.github/actions/jit-github-action/retry-curl.sh
         OIDC_TOKEN_RESPONSE=$(retry_curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL")
         OIDC_TOKEN_RESPONSE_CODE=${OIDC_TOKEN_RESPONSE: -3}
         echo "Calling Github OIDC Auth endpoint returned with response_code=$OIDC_TOKEN_RESPONSE_CODE"
