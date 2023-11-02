@@ -7,6 +7,7 @@ retry_curl() {
     while [[ $retries -lt $MAX_RETRIES ]]; do
         response=$(curl -s -w "%{http_code}" "$@")
         curl_exit_code=$?
+        echo "curl_exit_code=$curl_exit_code" >&2
         if [ $curl_exit_code = 0 ]; then
             status_code=${response: -3}  # Extract the status code from the response
             if [[ $status_code != 104 && $status_code != 107 && $status_code != 502 && $status_code != 503 && $status_code != 504 ]]; then
