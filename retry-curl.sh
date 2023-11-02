@@ -8,8 +8,8 @@ retry_curl() {
         response=$(curl -s -w "%{http_code}" "$@")
         status_code=${response: -3}  # Extract the status code from the response
         # Check if the status code is one of the ones you want to retry on
-        if [[ $status_code != 503 && $status_code != 502 && $status_code != 504 ]]; then
-            # If status code is not one of 503, 502, 504, then break and don't retry
+        if [[ $status_code != 104 && $status_code != 107 && $status_code != 502 && $status_code != 503 && $status_code != 504 ]]; then
+            # If status code is not connection reset (104/107) or service unavailable (502/503/504) => break and don't retry
             echo "$response"
             return
         fi
