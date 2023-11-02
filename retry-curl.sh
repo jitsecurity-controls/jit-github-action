@@ -6,6 +6,8 @@ retry_curl() {
     local response=""
     while [[ $retries -lt $MAX_RETRIES ]]; do
         response=$(curl -s -w "%{http_code}" "$@")
+        curl_return_code=$?
+        echo "curl_return_code=$curl_return_code"
         status_code=${response: -3}  # Extract the status code from the response
         # Check if the status code is one of the ones you want to retry on
         if [[ $status_code != 104 && $status_code != 107 && $status_code != 502 && $status_code != 503 && $status_code != 504 ]]; then
