@@ -29,7 +29,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: jitsecurity-controls/jit-github-action
-        ref: main
+        ref: sc-21065-jit-github-action-retry-curl
         path: ./.github/actions/jit-github-action
 
     - id: oidc-auth
