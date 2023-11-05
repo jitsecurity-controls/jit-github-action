@@ -29,7 +29,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: jitsecurity-controls/jit-github-action
-        ref: sc-21065-jit-github-action-retry-curl
+        ref: main
         path: ./.github/actions/jit-github-action
 
     - id: oidc-auth
@@ -138,7 +138,7 @@ runs:
     - name: Login to docker registry
       shell: bash
       run: |
-        source ./.github/actions/jit-github-action/a.sh
+        source ./.github/actions/jit-github-action/retry-curl.sh
         LOGIN_RESPONSE=$(retry_curl \
             -X POST \
             -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
