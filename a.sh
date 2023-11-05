@@ -27,5 +27,5 @@ retry_curl() {
           sleep $retry_delay
         fi
     done
-    echo "$response"  # If the loop finishes, return the last response
+    echo ""  # If the loop finishes, return the last response
 }
