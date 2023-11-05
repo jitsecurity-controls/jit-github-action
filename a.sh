@@ -20,17 +20,6 @@ retry_curl() {
         fi
 
         ((retries++))
-
-    
-          
-            
-    
-
-          
-          Expand Down
-    
-    
-  
         echo "Attempt #$(($retries)) returned status code: $status_code" >&2
         if [[ $retries -lt $MAX_RETRIES ]]; then
           retry_delay=$(($base_retry_delay**$retries))
