@@ -135,9 +135,7 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ inputs.security_control }}")  # replace / with __ to avoid / interpreted as directory separator
-        echo "(info) CACHE_FILE: $CACHE_FILE" 
-        echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
+        echo "SKIP Cacheing" 
 
     - name: Login to docker registry
       shell: bash
@@ -173,7 +171,7 @@ runs:
         restore-keys: ${{ steps.set-cache-file.outputs.cache_file }}@
 
     - name: Load image from cache
-      if: steps.cache-docker-image.outputs.cache-matched-key != ''
+      if: false
       shell: bash
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
