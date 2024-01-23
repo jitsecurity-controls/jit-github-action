@@ -126,6 +126,8 @@ runs:
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
         ls
+        echo "Liron Client Payload:"
+        echo '${{ toJSON(github.event.inputs.client_payload.payload) }}'
 
     - name: Fallback to checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
