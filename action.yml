@@ -154,7 +154,7 @@ runs:
 
     - name: Exit if checkout failure is fatal
       shell: bash
-      if: (steps.checkout-entire-repo.outcome == 'failure' || steps.checkout-branch-diff.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
+      if: (steps.checkout-entire-repo.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
       run: |
         echo "(error) Entire repo checkout failed, can't continue job execution"
         exit 102
