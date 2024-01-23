@@ -120,7 +120,7 @@ runs:
         BASE_SHA=$(echo '${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}')
         HEAD_SHA=$(echo '${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}')
 
-        git clone --no-checkout --filter=blob:none https://x-access-token:${GITHUB_TOKEN}@github.com/${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}.git code/
+        git clone --no-checkout --filter=blob:none https://x-access-token:${{ steps.oidc-auth.outputs.github_token }}@github.com/${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}.git code/
         cd code/
 
         git fetch origin $BASE_SHA
@@ -135,7 +135,7 @@ runs:
         ls
 
         echo "Liron Client Payload:"
-        echo '${{ toJSON(github.event.pull_request) }}'
+        echo '${{ toJSON(github.event) }}'
         echo "Liron Client Payload2:"
         echo '${{ toJSON(github.event.pull_request) }}'
 
