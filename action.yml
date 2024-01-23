@@ -121,18 +121,24 @@ runs:
       run: |    
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-        echo "Cloning the repository without files..."
+        
+        echo "(info) Cloning the repository without files..."
         git clone --no-checkout --filter=blob:none -b LironJit-patch-1 https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
-        echo "Fetching the base commit..."
+        
+        echo "(info) Fetching the base commit..."
         git fetch origin $BASE_SHA:$BASE_SHA
-        echo "Generating list of modified files..."
+        
+        echo "(info) Generating list of modified files..."
         git diff --name-only $BASE_SHA...LironJit-patch-1 > /tmp/modified_files.txt
-        echo "Initializing sparse checkout..."
+        
+        echo "(info) Initializing sparse checkout..."
         git sparse-checkout init
-        echo "Setting the list of files to checkout..."
+        
+        echo "(info) Setting the list of files to checkout..."
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
-        echo "Checking out the following files:"
+        
+        echo "(info) Checking out the following files:"
         git checkout
         ls
 
