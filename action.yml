@@ -115,7 +115,7 @@ runs:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
       if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
       # TODO: in git clone, get and use the branch name from the payload
-      run: |    
+      run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
@@ -127,11 +127,6 @@ runs:
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
         ls
-
-        echo "steps.checkout-branch-diff=${{ steps.checkout-branch-diff.outcome }}"
-        echo "steps.checkout-branch-diff=${{ steps.checkout-branch-diff }}"
-        echo "steps.checkout-branch-diff=${{ checkout-branch-diff.outcome }}"
-        echo "steps.checkout-branch-diff=${{ checkout-branch-diff }}"
 
     - name: Fallback to checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
