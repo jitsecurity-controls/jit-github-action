@@ -119,13 +119,13 @@ runs:
         git clone --no-checkout --filter=blob:none https://x-access-token:${{ steps.oidc-auth.outputs.github_token }}@github.com/${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}.git code/
         cd code/
 
-        common_ancestor=$(git merge-base ${{ github.event.inputs.base_sha }} ${{ github.event.inputs.head_sha }})
+        common_ancestor=$(git merge-base ${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }} ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }})
 
         base_branch=$(git branch -r --contains $common_ancestor | grep -v HEAD | sed 's/.*\///' | head -n 1)
 
         git fetch origin $base_branch:$base_branch
 
-        git diff --name-only $base_branch...${{ github.event.inputs.head_sha }} > /tmp/modified_files.txt
+        git diff --name-only $base_branch...${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }} > /tmp/modified_files.txt
         cat /tmp/modified_files.txt
 
         git sparse-checkout init
