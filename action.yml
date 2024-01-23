@@ -109,6 +109,7 @@ runs:
         path: ".jit/"
 
     - name: Checkout modified repository files
+      continue-on-error: true
       id: checkout-branch-diff
       shell: bash
       env:
