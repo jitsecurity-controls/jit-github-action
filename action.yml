@@ -116,7 +116,7 @@ runs:
       if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
       # TODO: in git clone, get and use the branch name from the payload
       run: |
-        git clone --no-checkout --filter=blob:none -b test-diff-fetch git@github.com:lironjit/sec-monitored-repo.git code/
+        git clone --no-checkout --filter=blob:none -b test-diff-fetch https://x-access-token:${{ steps.oidc-auth.outputs.github_token }}@github.com/lironjit/sec-monitored-repo.git code/
         cd code/
         ls
         git fetch origin main:main
