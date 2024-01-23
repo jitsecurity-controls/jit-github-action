@@ -114,11 +114,9 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
-      # if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true ) && fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && fromJSON(github.event.inputs.client_payload).payload.commits.base_sha
-      # TODO: in git clone, get and use the branch name from the payload
       run: |    
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -129,7 +127,7 @@ runs:
         
         echo "(info) Fetching the base commit and list of modified files..."
         git fetch origin $BASE_SHA:$BASE_SHA
-        git diff --name-only $BASE_SHA...massive-diffjasjaj > /tmp/modified_files.txt
+        git diff --name-only $BASE_SHA...massive-diff > /tmp/modified_files.txt
         
         echo "(info) Initializing sparse checkout and checking out modified files..."
         git sparse-checkout init
@@ -139,6 +137,7 @@ runs:
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
 
+    # scans default branches and serves as a fallback for the checkout-branch-diff step in case it fails
     - name: Checkout entire repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
       continue-on-error: true
