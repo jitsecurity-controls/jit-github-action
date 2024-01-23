@@ -116,14 +116,16 @@ runs:
       if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
       # TODO: in git clone, get and use the branch name from the payload
       run: |
-        git clone --no-checkout --filter=blob:none -b sc-22976-add-priority-sortable-column-to-backlog git@github.com:jitsecurity/jit-webapp.git code/
+        git clone --no-checkout --filter=blob:none -b LironJit-patch-1 git@github.com:liron-research-org/liron-service.git code/
         cd code/
+        ls
         git fetch origin main:main
-        git diff --name-only main...sc-22976-add-priority-sortable-column-to-backlog > /tmp/modified_files.txt
+        git diff --name-only main...LironJit-patch-1 > /tmp/modified_files.txt
         echo /tmp/modified_files.txt
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
+        ls
 
     - name: Fallback to checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
