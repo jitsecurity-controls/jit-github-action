@@ -117,6 +117,7 @@ runs:
       # TODO: in git clone, get and use the branch name from the payload
       run: |    
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
+        HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         git clone --no-checkout --filter=blob:none -b LironJit-patch-1 https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
