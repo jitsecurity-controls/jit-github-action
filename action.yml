@@ -123,9 +123,7 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         
         echo "(info) Cloning the repository without files..."
-        pwd
-        git clone --no-checkout --filter=blob:none -b findthisbranch https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
-        ls
+        git clone --no-checkout --filter=blob:none -b ${$BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
         
         echo "(info) Fetching the base commit and list of modified files..."
