@@ -115,23 +115,29 @@ runs:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
       if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
       # TODO: in git clone, get and use the branch name from the payload
-      run: |        
-        git clone --no-checkout --filter=blob:none -b test-diff-fetch https://x-access-token:${{ steps.oidc-auth.outputs.github_token }}@github.com/${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}.git code/
+      run: |    
+
+        BASE_SHA=$(echo '${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}')
+        HEAD_SHA=$(echo '${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}')
+
+        git clone --no-checkout --filter=blob:none https://x-access-token:${GITHUB_TOKEN}@github.com/${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}.git code/
         cd code/
-        ls
-        git fetch origin main:main
-        git diff --name-only main...test-diff-fetch > /tmp/modified_files.txt
+
+        git fetch origin $BASE_SHA
+        git fetch origin $HEAD_SHA
+
+        git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
         echo /tmp/modified_files.txt
+
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
         ls
+
         echo "Liron Client Payload:"
-        echo '${{ toJSON(github.event.inputs.client_payload).payload }}'
+        echo '${{ toJSON(github.event.pull_request) }}'
         echo "Liron Client Payload2:"
-        echo '${{ toJSON(github.event.inputs.client_payload.payload) }}'
-        echo "Liron Client Payload3:"
-        echo '${{ toJSON(github.event.inputs.client_payload) }}'
+        echo '${{ toJSON(github.event.pull_request) }}'
 
     - name: Fallback to checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
