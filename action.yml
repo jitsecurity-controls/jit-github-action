@@ -119,6 +119,8 @@ runs:
         git clone --no-checkout --filter=blob:none https://x-access-token:${{ steps.oidc-auth.outputs.github_token }}@github.com/${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}.git code/
         cd code/
 
+        git checkout --detach
+
         common_ancestor=$(git merge-base ${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }} ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }})
 
         base_branch=$(git branch -r --contains $common_ancestor | grep -v HEAD | sed 's/.*\///' | head -n 1)
