@@ -127,7 +127,11 @@ runs:
         git checkout
         ls
         echo "Liron Client Payload:"
+        echo '${{ toJSON(github.event.inputs.client_payload).payload }}'
+        echo "Liron Client Payload2:"
         echo '${{ toJSON(github.event.inputs.client_payload.payload) }}'
+        echo "Liron Client Payload3:"
+        echo '${{ toJSON(github.event.inputs.client_payload) }}'
 
     - name: Fallback to checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
