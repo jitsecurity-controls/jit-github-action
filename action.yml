@@ -121,8 +121,8 @@ runs:
 
         git clone --no-checkout --filter=blob:none -b test-diff-fetch https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
-        git fetch origin ${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}:${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
-        git diff --name-only ${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}...test-diff-fetch > /tmp/modified_files.txt
+        git fetch origin $BASE_SHA:$BASE_SHA
+        git diff --name-only $BASE_SHA...test-diff-fetch > /tmp/modified_files.txt
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
