@@ -108,12 +108,29 @@ runs:
         ref: ''
         path: ".jit/"
 
-    - name: Checkout original repository
+    - name: Checkout modified repository files
+      id: checkout-branch-diff
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
+      if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
+      # TODO: in git clone, get and use the branch name from the payload
+      run: |
+        git clone --no-checkout --filter=blob:none -b sc-22976-add-priority-sortable-column-to-backlog git@github.com:jitsecurity/jit-webapp.git code/
+        cd code/
+        git fetch origin main:main
+        git diff --name-only main...sc-22976-add-priority-sortable-column-to-backlog > /tmp/modified_files.txt
+        echo /tmp/modified_files.txt
+        git sparse-checkout init
+        cat /tmp/modified_files.txt > .git/info/sparse-checkout
+        git checkout
+
+    - name: Fallback to checkout original repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
       continue-on-error: true
       id: checkout-original-repo
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
-      if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
+      if: steps.checkout-branch-diff.outcome == 'failure'
       uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
