@@ -109,30 +109,42 @@ runs:
         path: ".jit/"
 
     - name: Checkout modified repository files
+      continue-on-error: true
       id: checkout-branch-diff
       shell: bash
       env:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
-      if: ( !( fromJSON(github.event.inputs.client_payload).payload.runner_setup ) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
-      # TODO: in git clone, get and use the branch name from the payload
-      run: |
-        git clone --no-checkout --filter=blob:none -b test-diff-fetch git@github.com:lironjit/sec-monitored-repo.git code/
+      if: >-
+        ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
+        && fromJSON(github.event.inputs.client_payload).payload.commits.base_sha
+      run: |    
+        BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
+        BRANCH_NAME=${{ fromJSON(github.event.inputs.client_payload).payload.branch }}
+        FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
+        
+        echo "(info) Cloning the repository without files..."
+        git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
-        ls
-        git fetch origin main:main
-        git diff --name-only main...test-diff-fetch > /tmp/modified_files.txt
-        echo /tmp/modified_files.txt
+        
+        echo "(info) Fetching the base commit and list of modified files..."
+        git fetch origin $BASE_SHA:$BASE_SHA
+        git diff --name-only $BASE_SHA...$BRANCH_NAME > /tmp/modified_files.txt
+        
+        echo "(info) Initializing sparse checkout and checking out modified files..."
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
-        ls
+        
+        echo "(info) Checked out the following files:"
+        cat /tmp/modified_files.txt
 
-    - name: Fallback to checkout original repository
+    # scans default branches and serves as a fallback for the checkout-branch-diff step in case it fails
+    - name: Checkout entire repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
       continue-on-error: true
-      id: checkout-original-repo
+      id: checkout-entire-repo
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
-      if: steps.checkout-branch-diff.outcome == 'failure'
+      if: steps.checkout-branch-diff.outcome != 'success'
       uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -143,9 +155,9 @@ runs:
 
     - name: Exit if checkout failure is fatal
       shell: bash
-      if: steps.checkout-original-repo.outcome == 'failure' && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
+      if: (steps.checkout-entire-repo.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
       run: |
-        echo "(error) Original repo checkout failed, can't continue job execution"
+        echo "(error) Entire repo checkout failed, can't continue job execution"
         exit 102
 
     # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
