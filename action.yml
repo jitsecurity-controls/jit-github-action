@@ -119,10 +119,10 @@ runs:
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
-        git clone --no-checkout --filter=blob:none -b test-diff-fetch https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
+        git clone --no-checkout --filter=blob:none -b LironJit-patch-1 https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
         git fetch origin $BASE_SHA:$BASE_SHA
-        git diff --name-only $BASE_SHA...test-diff-fetch > /tmp/modified_files.txt
+        git diff --name-only $BASE_SHA...LironJit-patch-1 > /tmp/modified_files.txt
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
