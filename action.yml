@@ -141,7 +141,6 @@ runs:
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
-        git diff --name-only $BASE_SHA...$BRANCH_NAME > /tmp/modified_files.txt
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
