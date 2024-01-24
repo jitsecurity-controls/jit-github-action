@@ -121,7 +121,7 @@ runs:
       # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
       run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
-        BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
+        HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         BRANCH_NAME=${{ fromJSON(github.event.inputs.client_payload).payload.branch }}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
