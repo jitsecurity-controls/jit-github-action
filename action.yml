@@ -108,45 +108,51 @@ runs:
         ref: ''
         path: ".jit/"
 
-    - name: Checkout modified repository files
+    - name: Sparse checkout repository
       continue-on-error: true
-      id: checkout-branch-diff
+      id: sparse-checkout-repository
       shell: bash
       env:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
+      # only checkout if control's workflow job defines it and if there is a base sha to compare to
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && fromJSON(github.event.inputs.client_payload).payload.commits.base_sha
-      run: |    
+      # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
+      run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
+        BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         BRANCH_NAME=${{ fromJSON(github.event.inputs.client_payload).payload.branch }}
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
         git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
-        
+
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch origin $BASE_SHA:$BASE_SHA
-        git diff --name-only $BASE_SHA...$BRANCH_NAME > /tmp/modified_files.txt
-        
+        git fetch origin $BASE_SHA:$HEAD_SHA
+        git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
+
         echo "(info) Initializing sparse checkout and checking out modified files..."
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
-        
+
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
+        echo "(info) Done checking out modified files"
+        git diff --name-only $BASE_SHA...$BRANCH_NAME > /tmp/modified_files.txt
 
-    # scans default branches and serves as a fallback for the checkout-branch-diff step in case it fails
-    - name: Checkout entire repository
+
+    # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
+    - name: Checkout repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
       continue-on-error: true
-      id: checkout-entire-repo
+      id: checkout-repository
       # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
-        && steps.checkout-branch-diff.outcome != 'success'
+        && steps.sparse-checkout-repository.outcome != 'success'
       uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
@@ -157,9 +163,9 @@ runs:
 
     - name: Exit if checkout failure is fatal
       shell: bash
-      if: (steps.checkout-entire-repo.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
+      if: (steps.checkout-repository.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
       run: |
-        echo "(error) Entire repo checkout failed, can't continue job execution"
+        echo "(error) Repository checkout failed, can't continue job execution"
         exit 102
 
     # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
