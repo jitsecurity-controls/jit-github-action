@@ -111,7 +111,6 @@ runs:
     - name: Sparse checkout repository
       continue-on-error: true
       id: sparse-checkout-repository
-      shell: bash
       env:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
       # only checkout if control's workflow job defines it and if there is a base and head sha to compare to
