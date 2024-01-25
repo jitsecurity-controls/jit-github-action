@@ -130,7 +130,8 @@ runs:
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch origin $BASE_SHA $HEAD_SHA --filter=blob:none
+        git fetch origin $BASE_SHA --filter=blob:none
+        git fetch origin $HEAD_SHA --filter=blob:none
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
