@@ -117,7 +117,7 @@ runs:
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha)
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
         ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
