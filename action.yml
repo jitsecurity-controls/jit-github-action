@@ -143,6 +143,8 @@ runs:
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
 
+        git remote add origin https://github.com/${FULL_REPO_PATH}.git
+
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
     - name: Checkout repository
