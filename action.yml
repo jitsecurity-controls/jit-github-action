@@ -127,11 +127,11 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
-        git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
+        git clone --no-checkout -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch origin $BRANCH_NAME --filter=blob:none
+        git fetch origin $BRANCH_NAME
         git diff --name-only origin/main...${BRANCH_NAME} > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
@@ -142,8 +142,6 @@ runs:
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
-
-        git blame -p --incremental 04f98604c27ffa24149745ce6b4c472e49ccc196 -- ruby.rb
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
