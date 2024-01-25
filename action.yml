@@ -155,7 +155,7 @@ runs:
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
-        git blame -p --incremental $HEAD_SHA -- diff.py
+        # git blame -p --incremental $HEAD_SHA -- diff.py
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
