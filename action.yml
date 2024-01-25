@@ -131,6 +131,7 @@ runs:
 
         echo "(info) Fetching the base commit and list of modified files..."
         git fetch origin main --filter=blob:none
+        git fetch origin $BASE_SHA --filter=blob:none
         git fetch origin $BRANCH_NAME --filter=blob:none
         git diff --name-only main...$BRANCH_NAME > /tmp/modified_files.txt
 
