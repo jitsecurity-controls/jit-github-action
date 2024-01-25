@@ -131,8 +131,8 @@ runs:
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch origin $BRANCH_NAME
-        git diff --name-only origin/main...${BRANCH_NAME} > /tmp/modified_files.txt
+        git fetch origin $BASE_SHA:$HEAD_SHA
+        git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
         git sparse-checkout init
