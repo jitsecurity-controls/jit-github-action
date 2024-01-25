@@ -143,7 +143,7 @@ runs:
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
 
-        git remote add origin https://github.com/${FULL_REPO_PATH}.git
+        git blame -p --incremental 04f98604c27ffa24149745ce6b4c472e49ccc196 -- ruby.rb
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
