@@ -136,30 +136,21 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
-        git --version
+        export GIT_TRACE=1
+        export GIT_CURL_VERBOSE=1
         git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
+        unset GIT_TRACE
+        unset GIT_CURL_VERBOSE
         cd code/
-        
+
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch --depth=2147483647 origin $BASE_SHA --filter=blob:none
-        git fetch --depth=2147483647 origin $HEAD_SHA --filter=blob:none
+        git fetch --filter=blob:none origin $BASE_SHA $HEAD_SHA
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
-        
+
         echo "(info) Initializing sparse checkout and checking out modified files..."
-        git sparse-checkout init
+        git sparse-checkout init --no-cone
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
-        
-        echo "(info) Checking out and analyzing modified files..."
-        while IFS= read -r filename; do
-          if [ -f "$filename" ]; then
-            echo "(info) Analyzing file: $filename"
-            git blame -p --incremental $HEAD_SHA -- "$filename"
-          else
-            echo "(warning) File not found: $filename"
-          fi
-        done < /tmp/modified_files.txt
-        echo "(info) Done analyzing modified files"
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
@@ -272,7 +263,8 @@ runs:
 
     - name: Run The Action
       run: |
-        echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
+        echo GITHUB_TOKEN=${{ steps.oidc-auth.outputs.github_token }} > /tmp/docker_env.txt
+        echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} >> /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
         if [ -n "${{ inputs.security_control_output_file }}" ]
