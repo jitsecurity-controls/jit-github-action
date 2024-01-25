@@ -119,6 +119,7 @@ runs:
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha)
       # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
+      # fetch base and head commit history (without files --filter=blob:none)
       run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
@@ -130,10 +131,8 @@ runs:
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch origin main --filter=blob:none
-        git fetch origin $BASE_SHA --filter=blob:none
         git fetch origin $BRANCH_NAME --filter=blob:none
-        git diff --name-only main...$BRANCH_NAME > /tmp/modified_files.txt
+        git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
         git sparse-checkout init
