@@ -108,6 +108,15 @@ runs:
         ref: ''
         path: ".jit/"
 
+      # uses: actions/checkout@v3
+      # with:
+      #   repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
+      #   ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
+      #   fetch-depth: 0
+      #   token: ${{ steps.oidc-auth.outputs.github_token }}
+      #   path: "code/"
+      #   sparse-checkout: |
+      #     diff.py
     - name: Sparse checkout repository
       continue-on-error: true
       id: sparse-checkout-repository
@@ -118,17 +127,6 @@ runs:
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha)
-      # uses: actions/checkout@v3
-      # with:
-      #   repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-      #   ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
-      #   fetch-depth: 0
-      #   token: ${{ steps.oidc-auth.outputs.github_token }}
-      #   path: "code/"
-      #   sparse-checkout: |
-      #     diff.py
-
-
       # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
       # fetch base and head commit history (without files --filter=blob:none)
       run: |
@@ -150,7 +148,7 @@ runs:
         echo "(info) Initializing sparse checkout and checking out modified files..."
         git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
-        git checkout
+        git checkout $HEAD_SHA
 
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
