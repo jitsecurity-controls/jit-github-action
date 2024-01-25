@@ -151,14 +151,7 @@ runs:
         git checkout
 
         echo "(info) Checking out and analyzing modified files..."
-        while IFS= read -r filename; do
-          if [ -f "$filename" ]; then
-            echo "(info) Analyzing file: $filename"
-            git blame -p --incremental $HEAD_SHA -- "$filename"
-          else
-            echo "(warning) File not found: $filename"
-          fi
-        done < /tmp/modified_files.txt
+        xargs -a /tmp/modified_files.txt -I {} git blame -p --incremental $HEAD_SHA -- {}
         echo "(info) Done analyzing modified files"
 
 
