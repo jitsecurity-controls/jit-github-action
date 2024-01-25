@@ -145,7 +145,7 @@ runs:
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
-        git sparse-checkout init
+        git sparse-checkout init --no-cone
         cat .git/info/sparse-checkout
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         cat .git/info/sparse-checkout
