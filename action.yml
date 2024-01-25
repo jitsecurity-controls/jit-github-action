@@ -138,9 +138,9 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
+        git --version
         git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
-        cat .git/config
 
         echo "(info) Fetching the base commit and list of modified files..."
         git fetch --depth=2147483647 origin $BASE_SHA --filter=blob:none
@@ -155,7 +155,6 @@ runs:
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
-        cat .git/config
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
