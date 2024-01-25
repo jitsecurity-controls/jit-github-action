@@ -151,13 +151,14 @@ runs:
         git checkout
 
         echo "(info) Retrieving blame data for modified files..."
-        cat /tmp/modified_files.txt | xargs -I {} sh -c ' \
-          if [ -f "{}" ]; then \
-            echo "(info) Analyzing file: {}"; \
-            git blame -p --incremental $HEAD_SHA -- "{}" > /dev/null; \
-          else echo "(warning) File not found: {}"; \
-          fi'
-
+        while IFS= read -r filename; do
+          if [ -f "$filename" ]; then
+            echo "(info) Analyzing file: $filename"
+            git blame -p --incremental $HEAD_SHA -- "$filename"
+          else
+            echo "(warning) File not found: $filename"
+          fi
+        done < /tmp/modified_files.txt
         echo "(info) Done analyzing modified files"
 
 
