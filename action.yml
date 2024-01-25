@@ -285,3 +285,10 @@ runs:
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
+    - name: print final git config
+      continue-on-error: true
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
+      run: |
+        cat .git/config
