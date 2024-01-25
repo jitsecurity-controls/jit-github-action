@@ -145,12 +145,16 @@ runs:
         git fetch --depth=2147483647 origin $HEAD_SHA --filter=blob:none
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
-        echo "(info) Initializing sparse checkout and checking out modified files..."
-        git sparse-checkout init
-        cat /tmp/modified_files.txt > .git/info/sparse-checkout
-        git checkout
+        echo "(info) Explicitly fetching blobs for modified files..."
+        xargs -a /tmp/modified_files.txt -I {} git fetch origin $HEAD_SHA:{} --filter=blob
 
-        echo "(info) Checking out and analyzing modified files..."
+        echo "(info) Initializing sparse checkout..."
+        git sparse-checkout init
+
+        echo "(info) Checking out modified files..."
+        xargs -a /tmp/modified_files.txt git checkout $HEAD_SHA --
+
+        echo "(info) Analyzing modified files..."
         xargs -a /tmp/modified_files.txt -I {} git blame -p --incremental $HEAD_SHA -- {}
         echo "(info) Done analyzing modified files"
 
