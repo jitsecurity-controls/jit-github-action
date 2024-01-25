@@ -151,8 +151,12 @@ runs:
         git checkout
 
         echo "(info) Retrieving blame data for modified files..."
-        git diff --name-only $BASE_SHA...$HEAD_SHA |
-          xargs -I {} sh -c 'if [ -f "{}" ]; then git blame -p --incremental $HEAD_SHA -- "{}"; else echo "(warning) File not found: {}"; fi'
+        cat /tmp/modified_files.txt | xargs -I {} sh -c ' \
+          if [ -f "{}" ]; then \
+            echo "(info) Analyzing file: {}"; \
+            git blame -p --incremental $HEAD_SHA -- "{}" > /dev/null; \
+          else echo "(warning) File not found: {}"; \
+          fi'
 
         echo "(info) Done analyzing modified files"
 
