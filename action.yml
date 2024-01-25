@@ -136,11 +136,7 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
-        export GIT_TRACE=1
-        export GIT_CURL_VERBOSE=1
         git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
-        unset GIT_TRACE
-        unset GIT_CURL_VERBOSE
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
@@ -151,6 +147,8 @@ runs:
         git sparse-checkout init --no-cone
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
+
+        cat .git/config
 
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
