@@ -141,15 +141,16 @@ runs:
         cd code/
         
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch --depth=2147483647 origin $BASE_SHA $HEAD_SHA --filter=blob:none
+        git fetch --depth=2147483647 origin $BASE_SHA --filter=blob:none
+        git fetch --depth=2147483647 origin $HEAD_SHA --filter=blob:none
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
         
         echo "(info) Initializing sparse checkout and checking out modified files..."
-        git sparse-checkout init --no-cone
+        git sparse-checkout init
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout
-
-        echo "(info) Retrieving blame data for modified files..."
+        
+        echo "(info) Checking out and analyzing modified files..."
         while IFS= read -r filename; do
           if [ -f "$filename" ]; then
             echo "(info) Analyzing file: $filename"
