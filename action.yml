@@ -143,7 +143,7 @@ runs:
         cat .git/config
 
         echo "(info) Fetching the base commit and list of modified files..."
-         git fetch --depth=2147483647 origin $BASE_SHA --filter=blob:none
+        git fetch --depth=2147483647 origin $BASE_SHA --filter=blob:none
         git fetch --depth=2147483647 origin $HEAD_SHA --filter=blob:none
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
