@@ -24,6 +24,14 @@ inputs:
     description: "inline environment variables to be passed to the container"
     required: false
     default: ""
+  registry_username:
+    description: "registry username"
+    required: false
+    default: ""
+  registry_password:
+    description: "registry password"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -139,7 +147,7 @@ runs:
         echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
-    - name: Login to docker registry
+    - name: Login to docker registry (registry.jit.io)
       shell: bash
       if: startsWith(${{ github.event.inputs.security_control }}, 'registry.jit.io') == true
       run: |
@@ -160,6 +168,12 @@ runs:
           echo "Got fatal error when login to Jit docker registry"
           exit 103
         fi
+
+    - name: Login to docker registry (registry.jit.io)
+      shell: bash
+      if: startsWith(${{ github.event.inputs.security_control }}, 'ghcr.io') == true
+      run: |
+          echo "${{ inputs.registry_password }}" | base64 --decode | docker login ghcr.io -u ${{ inputs.registry_username }} --password-stdin
 
     - uses: actions/cache/restore@v3
       if: steps.set-cache-file.outputs.cache_file != ''
