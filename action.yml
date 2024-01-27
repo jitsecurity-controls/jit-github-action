@@ -141,6 +141,7 @@ runs:
 
     - name: Login to docker registry
       shell: bash
+      if: startsWith(${{ github.event.inputs.security_control }}, 'registry.jit.io') == true
       run: |
         source ./.github/actions/jit-github-action/retry-curl.sh
         LOGIN_RESPONSE=$(retry_curl \
