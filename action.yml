@@ -108,15 +108,6 @@ runs:
         ref: ''
         path: ".jit/"
 
-      # uses: actions/checkout@v3
-      # with:
-      #   repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-      #   ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
-      #   fetch-depth: 0
-      #   token: ${{ steps.oidc-auth.outputs.github_token }}
-      #   path: "code/"
-      #   sparse-checkout: |
-      #     diff.py
     - name: Sparse checkout repository
       continue-on-error: true
       id: sparse-checkout-repository
@@ -140,7 +131,7 @@ runs:
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
-        git fetch --filter=blob:none origin $BASE_SHA $HEAD_SHA
+        git fetch --filter=blob:none origin $HEAD_SHA
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
@@ -285,10 +276,3 @@ runs:
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
-    - name: print final git config
-      continue-on-error: true
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
-      run: |
-        cat .git/config
