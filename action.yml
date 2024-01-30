@@ -118,8 +118,6 @@ runs:
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha)
-      # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
-      # fetch base and head commit history (without files --filter=blob:none)
       run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
@@ -127,7 +125,8 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
-        git clone --no-checkout -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
+        # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
+        git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
@@ -135,9 +134,10 @@ runs:
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
-        git sparse-checkout init
+        # use the --no-cone flag because we're providing a list of files which is not supported by cone mode
+        git sparse-checkout init --no-cone
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
-        git checkout
+        git checkout $BRANCH_NAME
 
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
