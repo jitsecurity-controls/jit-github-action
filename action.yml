@@ -120,10 +120,10 @@ runs:
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
         && fromJSON(github.event.inputs.client_payload).payload.branch)
       run: |
-        BASE_SHA=2c30e314619a96bf1939b1f7b8e4f65143a04801
-        HEAD_SHA=8a3f81d818d217d23d2aede5a652c5377f0b7eaf
-        BRANCH_NAME=sc-23268-team-service-get-teams-support-filtering
-        FULL_REPO_PATH=jitsecurity/team-service
+        BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
+        HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
+        BRANCH_NAME=${{ fromJSON(github.event.inputs.client_payload).payload.branch }}
+        FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
         # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
