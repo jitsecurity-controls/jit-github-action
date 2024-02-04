@@ -126,17 +126,18 @@ runs:
         FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
 
         echo "(info) Cloning the repository without files..."
-        # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
         git clone --no-checkout --depth=1 --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
 
         echo "(info) Fetching the base commit and list of modified files..."
         git fetch --depth=1 origin $BASE_SHA
         git fetch --depth=1 origin $HEAD_SHA
-        git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
+        # Fetch the merge base separately
+        MERGE_BASE=$(git merge-base $BASE_SHA $HEAD_SHA)
+        git fetch --depth=1 origin $MERGE_BASE
+        git diff --name-only $MERGE_BASE...$HEAD_SHA > /tmp/modified_files.txt
 
         echo "(info) Initializing sparse checkout and checking out modified files..."
-        # use the --no-cone flag because we're providing a list of files which is not supported by cone mode
         git sparse-checkout init --no-cone
         cat /tmp/modified_files.txt > .git/info/sparse-checkout
         git checkout $BRANCH_NAME
