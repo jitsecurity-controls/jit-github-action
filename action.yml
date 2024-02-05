@@ -114,7 +114,6 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
-      # only checkout if control's workflow job defines it and if there is a base and head sha to compare to
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
