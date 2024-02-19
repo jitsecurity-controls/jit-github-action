@@ -5,7 +5,7 @@ retry_curl() {
     local base_retry_delay=3
     local response=""
     while [[ $retries -lt $MAX_RETRIES ]]; do
-        response=$(curl -s -w "%{http_code}" "$@")
+        response=$(curl -s -i -w "%{http_code}" "$@")
         curl_exit_code=$?
         echo "curl_exit_code=$curl_exit_code" >&2
         if [ $curl_exit_code = 0 ]; then
@@ -18,7 +18,7 @@ retry_curl() {
         else
             echo "Curl failed with exit code: $curl_exit_code" >&2
         fi
-        
+
         ((retries++))
         echo "Attempt #$(($retries)) returned status code: $status_code" >&2
         if [[ $retries -lt $MAX_RETRIES ]]; then
