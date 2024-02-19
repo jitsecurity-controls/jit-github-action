@@ -66,12 +66,26 @@ runs:
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
         
+        
+          AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
+          echo "response_body=$AUTH_RESPONSE_BODY"
+          AUTH_RESPONSE_HEADERS=$(echo $AUTH_RESPONSE | head -n 1)
+          echo "response_headers=$AUTH_RESPONSE_HEADERS"
+            
+        
         if [ $AUTH_RESPONSE_CODE = 200 ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
         else
           echo "Got fatal error when calling auth oidc token with jit server"
+          # echo response body to help debug
+          if [ $AUTH_RESPONSE_CODE = 403 ]; then
+            AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
+            echo "response_body=$AUTH_RESPONSE_BODY"
+            AUTH_RESPONSE_HEADERS=$(echo $AUTH_RESPONSE | head -n 1)
+            echo "response_headers=$AUTH_RESPONSE_HEADERS"
+          fi
           exit 101
         fi
 
@@ -238,3 +252,11 @@ runs:
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
+
+    - name: Alert Failure
+      if: failure()
+      shell: bash
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+      run: |
+        python .github/scripts/alert_failure.py --error-message "Jit Github Action failed because of reasons"
