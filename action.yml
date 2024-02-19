@@ -66,12 +66,7 @@ runs:
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
         
-        
-        AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
-        echo "response_body=$AUTH_RESPONSE_BODY"
-        AUTH_RESPONSE_HEADERS=$(echo $AUTH_RESPONSE | head -n 1)
-        echo "response_headers=$AUTH_RESPONSE_HEADERS"
-            
+        echo "response=$AUTH_RESPONSE"
         
         if [ $AUTH_RESPONSE_CODE = 200 ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
