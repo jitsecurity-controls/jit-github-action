@@ -40,14 +40,13 @@ runs:
       shell: bash
       run: npm install @actions/core@1.6.0 @actions/http-client
 
-    - name: Get Id Token
+    - name: Get OIDC Token
       uses: actions/github-script@v6
       id: get-oidc-token-from-github
       with:
         script: |
           const actionCore = require('@actions/core')
           const OIDC_TOKEN = await actionCore.getIDToken()
-          console.log(OIDC_TOKEN)
           actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
 
     - id: oidc-auth
