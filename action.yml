@@ -47,6 +47,7 @@ runs:
         script: |
           const actionCore = require('@actions/core')
           const OIDC_TOKEN = await actionCore.getIDToken()
+          echo "$OIDC_TOKEN"
           actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
 
     - id: oidc-auth
