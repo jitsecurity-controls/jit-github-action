@@ -53,7 +53,7 @@ runs:
     - id: oidc-auth
       shell: bash
       env:
-        OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.result }}
+        OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
         source ./.github/actions/jit-github-action/retry-curl.sh      
         AUTH_RESPONSE=$(retry_curl \
