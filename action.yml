@@ -44,10 +44,16 @@ runs:
         OIDC_TOKEN_RESPONSE_CODE=${OIDC_TOKEN_RESPONSE: -3}
         echo "Calling Github OIDC Auth endpoint returned with response_code=$OIDC_TOKEN_RESPONSE_CODE"
         
+        echo "response=$OIDC_TOKEN_RESPONSE"
+        
         if [ $OIDC_TOKEN_RESPONSE_CODE = 200 ]; then
-          OIDC_TOKEN_RESPONSE_BODY=${OIDC_TOKEN_RESPONSE:0:${#OIDC_TOKEN_RESPONSE}-3}
+          OIDC_TOKEN_RESPONSE_WITHOUT_STATUS="${response%???}"
+          OIDC_TOKEN_RESPONSE_BODY=$(echo -e "$response_without_status" | sed '1,/^$/d')
           OIDC_TOKEN=$(echo $OIDC_TOKEN_RESPONSE_BODY | jq -r '.value')
         else
+          if [ $OIDC_TOKEN_RESPONSE_CODE = 403 ]; then
+            echo "response=$OIDC_TOKEN_RESPONSE"
+          fi
           echo "Got fatal error when calling github oidc"
           exit 100
         fi
@@ -66,12 +72,21 @@ runs:
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
         
+        echo "response=$AUTH_RESPONSE"
+        
         if [ $AUTH_RESPONSE_CODE = 200 ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
         else
           echo "Got fatal error when calling auth oidc token with jit server"
+          # echo response body to help debug
+          if [ $AUTH_RESPONSE_CODE = 403 ]; then
+            AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
+            echo "response_body=$AUTH_RESPONSE_BODY"
+            AUTH_RESPONSE_HEADERS=$(echo $AUTH_RESPONSE | head -n 1)
+            echo "response_headers=$AUTH_RESPONSE_HEADERS"
+          fi
           exit 101
         fi
 
