@@ -46,8 +46,13 @@ runs:
       with:
         script: |
           const actionCore = require('@actions/core')
-          const OIDC_TOKEN = await actionCore.getIDToken()
-          actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
+          try {
+            const OIDC_TOKEN = await actionCore.getIDToken()
+            actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
+          } catch (error) {
+            actionCore.error('Failed to get OIDC Token: ' + error.message)
+            actionCore.setFailed('Action failed with error.')
+          }
 
     - id: oidc-auth
       shell: bash
