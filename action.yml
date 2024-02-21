@@ -46,13 +46,14 @@ runs:
       with:
         script: |
           const actionCore = require('@actions/core')
+          const { execSync } = require('child_process');
           try {
             const OIDC_TOKEN = await actionCore.getIDToken()
             throw "is Empty"
             actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
           } catch (error) {
-            actionCore.error('Failed to get OIDC Token: ' + error.message)
-            actionCore.setFailed('Action failed with error.')
+            actionCore.error('Failed to get OIDC Token: ' + error)
+            execSync('exit 100');
           }
 
     - id: oidc-auth
