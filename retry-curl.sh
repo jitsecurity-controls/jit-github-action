@@ -11,7 +11,7 @@ retry_curl() {
         if [ $curl_exit_code = 0 ]; then
             status_code=${response: -3}  # Extract the status code from the response
             if [[ $status_code != 104 && $status_code != 107 && $status_code != 502 && $status_code != 503 && $status_code != 504 ]]; then
-                # If status code is not connection reset (104/107) or service unavailable (502/503/504) => break and don't retry 
+                # If status code is not connection reset (104/107) or service unavailable (502/503/504) => break and don't retry
                 echo "$response"
                 return
             fi
