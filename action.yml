@@ -48,7 +48,7 @@ runs:
           const actionCore = require('@actions/core')
           try {
             const OIDC_TOKEN = await actionCore.getIDToken()
-            throw
+            throw "is Empty"
             actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
           } catch (error) {
             actionCore.error('Failed to get OIDC Token: ' + error.message)
