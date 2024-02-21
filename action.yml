@@ -49,10 +49,9 @@ runs:
           const { execSync } = require('child_process');
           try {
             const OIDC_TOKEN = await actionCore.getIDToken()
-            throw "is Empty"
             actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
           } catch (error) {
-            actionCore.error('Failed to get OIDC Token: ' + error)
+            actionCore.error('Failed to get OIDC Token from github servers: ' + error)
             execSync('exit 100');
           }
 
