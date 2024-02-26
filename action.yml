@@ -80,10 +80,10 @@ runs:
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
         elif [ $AUTH_RESPONSE_CODE = 422 ]; then
-          echo "Repo is no longer accessible for the installation" >&2
+          echo 1>&2 "Repo is no longer accessible for the installation"
           exit 104
         else
-          echo "Got fatal error when calling auth oidc token with jit server" >&2
+          echo 1>&2 "Got fatal error when calling auth oidc token with jit server"
           exit 101
         fi
 
@@ -155,7 +155,6 @@ runs:
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
 
-
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
     - name: Checkout repository
       # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
@@ -177,7 +176,7 @@ runs:
       shell: bash
       if: (steps.checkout-repository.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
       run: |
-        echo "(error) Repository checkout failed, can't continue job execution" >&2
+        echo 1>&2 "(error) Repository checkout failed, can't continue job execution"
         exit 102
 
     # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
@@ -207,7 +206,7 @@ runs:
           LOGIN_RESPONSE_BODY=${LOGIN_RESPONSE:0:${#LOGIN_RESPONSE}-3}
           echo $LOGIN_RESPONSE_BODY | docker login --username AWS --password-stdin registry.jit.io
         else
-          echo "Got fatal error when login to Jit docker registry" >&2
+          echo 1>&2 "Got fatal error when login to Jit docker registry"
           exit 103
         fi
 
