@@ -80,7 +80,7 @@ runs:
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
         elif [ $AUTH_RESPONSE_CODE = 422 ]; then
-          [[ $TRESHOLD =~ ^[0-9]+$ ]] || echo 1>&2 "Repo is no longer accessible for the installation"
+          printf "Repo is no longer accessible for the installation" 1>&2
           exit 104
         else
           echo 1>&2 "Got fatal error when calling auth oidc token with jit server"
