@@ -45,15 +45,17 @@ runs:
       id: get-oidc-token-from-github
       with:
         script: |
-          const actionCore = require('@actions/core')
+          const actionCore = require('@actions/core');
           const { execSync } = require('child_process');
-          try {
-            const OIDC_TOKEN = await actionCore.getIDToken()
-            actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN)
-          } catch (error) {
-            actionCore.error('Failed to get OIDC Token from github servers: ' + error)
-            execSync('exit 100');
-          }
+            (async () => {
+              try {
+                const OIDC_TOKEN = await actionCore.getIDToken();
+                actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN);
+              } catch (error) {
+                actionCore.error('Failed to get OIDC Token from GitHub servers: ' + (error?.message || error) + '\n');
+                execSync('exit 100');
+              }
+            })();
 
     - id: oidc-auth
       shell: bash
