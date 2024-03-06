@@ -52,7 +52,7 @@ runs:
                 const OIDC_TOKEN = await actionCore.getIDToken();
                 actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN);
               } catch (error) {
-                actionCore.error('Failed to get OIDC Token from GitHub servers: ' + (error?.message || error) + '\n');
+                actionCore.error('Failed to get OIDC Token from GitHub servers: ' + error + '\n');
                 execSync('exit 100');
               }
             })();
