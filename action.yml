@@ -75,7 +75,7 @@ runs:
         curl \
           -s -o /dev/null -w "%{http_code}" \
           -X POST \
-          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.jit_token }}" \
+          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).jit_token }}" \
           -H "Content-Type: application/json" \
           -d '{
                 "vendor_job_id": "${{ fromJSON(github.run_id) }}",
@@ -175,7 +175,7 @@ runs:
         source ./.github/actions/jit-github-action/retry-curl.sh
         LOGIN_RESPONSE=$(retry_curl \
             -X POST \
-            -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.jit_token }}" \
+            -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.client_payload).jit_token }}" \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/authentication/registry/login
         )
         
@@ -263,7 +263,7 @@ runs:
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
-          --jit-token ${{ fromJSON(github.event.inputs.jit_token }}
+          --jit-token ${{ fromJSON(github.event.inputs.client_payload).jit_token }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
