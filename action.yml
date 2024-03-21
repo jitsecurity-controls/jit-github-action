@@ -35,6 +35,27 @@ runs:
         repository: jitsecurity-controls/jit-github-action
         ref: main
         path: ./.github/actions/jit-github-action
+    
+    - name: Install OIDC Client from Core Package
+      shell: bash
+      run: npm install @actions/core@1.6.0 @actions/http-client
+
+    - name: Get OIDC Token
+      uses: actions/github-script@v6
+      id: get-oidc-token-from-github
+      with:
+        script: |
+          const actionCore = require('@actions/core');
+          const { execSync } = require('child_process');
+            (async () => {
+              try {
+                const OIDC_TOKEN = await actionCore.getIDToken();
+                actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN);
+              } catch (error) {
+                actionCore.error('Failed to get OIDC Token from GitHub servers: ' + error + '\n');
+                execSync('exit 100');
+              }
+            })();
 
     - id: oidc-auth
       shell: bash
