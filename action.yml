@@ -36,27 +36,6 @@ runs:
         ref: main
         path: ./.github/actions/jit-github-action
 
-    - name: Install OIDC Client from Core Package
-      shell: bash
-      run: npm install @actions/core@1.6.0 @actions/http-client
-
-    - name: Get OIDC Token
-      uses: actions/github-script@v6
-      id: get-oidc-token-from-github
-      with:
-        script: |
-          const actionCore = require('@actions/core');
-          const { execSync } = require('child_process');
-            (async () => {
-              try {
-                const OIDC_TOKEN = await actionCore.getIDToken();
-                actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN);
-              } catch (error) {
-                actionCore.error('Failed to get OIDC Token from GitHub servers: ' + error + '\n');
-                execSync('exit 100');
-              }
-            })();
-
     - id: oidc-auth
       shell: bash
       env:
@@ -80,7 +59,6 @@ runs:
         if [ $AUTH_RESPONSE_CODE = 200 ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
-          echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
         elif [ $AUTH_RESPONSE_CODE = 422 ]; then
           echo "Repo is no longer accessible for the installation"
           exit 104
@@ -97,7 +75,7 @@ runs:
         curl \
           -s -o /dev/null -w "%{http_code}" \
           -X POST \
-          -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
+          -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.jit_token }}" \
           -H "Content-Type: application/json" \
           -d '{
                 "vendor_job_id": "${{ fromJSON(github.run_id) }}",
@@ -197,7 +175,7 @@ runs:
         source ./.github/actions/jit-github-action/retry-curl.sh
         LOGIN_RESPONSE=$(retry_curl \
             -X POST \
-            -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
+            -H "Authorization: Bearer ${{ fromJSON(github.event.inputs.jit_token }}" \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/authentication/registry/login
         )
         
@@ -285,7 +263,7 @@ runs:
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
-          --jit-token ${{ steps.oidc-auth.outputs.jit_token }}
+          --jit-token ${{ fromJSON(github.event.inputs.jit_token }}
       shell: bash
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
