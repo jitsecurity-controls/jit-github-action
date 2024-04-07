@@ -28,6 +28,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: List installed packages
+      shell: bash
+      run: apt list --installed > installed_packages.txt
+    - name: Upload installed packages list
+      uses: actions/upload-artifact@v2
+      with:
+        name: installed-packages
+        path: installed_packages.txt
     # We are checking out the action repo files, in order to use pre defined scripts
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
