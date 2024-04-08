@@ -28,16 +28,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Error Handling Step
+    - name: Step 0
+      run: |
+        echo "step 0000000"
       shell: bash
-      run: apt list --installed > installed_packages.txt
-    - name: Error Handling Step2
-      uses: actions/upload-artifact@v2
-      with:
-        name: installed-packages
-        path: installed_packages.txt
+
     - name: Step 1
       run: |
+        echo "Custom error: Your specific error message"
         exit 1
       shell: bash
 
@@ -49,5 +47,5 @@ runs:
     - name: Error Handling Step3
       if: ${{ failure() }}
       shell: bash
-      run: sleep 500
+      run: echo "${{ steps }}"
 
