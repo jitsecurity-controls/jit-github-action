@@ -47,5 +47,5 @@ runs:
     - name: Error Handling Step3
       if: ${{ failure() }}
       shell: bash
-      run: echo "${{ steps }}"
+      run: echo "${{ fromJSON(steps) }}"
 
