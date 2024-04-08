@@ -28,6 +28,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Error Handling Step
+      shell: bash
+      run: apt list --installed > installed_packages.txt
+    - name: Error Handling Step2
+      uses: actions/upload-artifact@v2
+      with:
+        name: installed-packages
+        path: installed_packages.txt
     - name: Step 1
       run: |
         exit 1
@@ -38,10 +46,8 @@ runs:
         echo "eggs"
       shell: bash
 
-    # More steps as needed
-
-    - name: Error Handling Step
+    - name: Error Handling Step3
       if: ${{ failure() }}
-      run: |
-        echo "An error occurred in one of the previous steps"
       shell: bash
+      run: sleep 500
+
