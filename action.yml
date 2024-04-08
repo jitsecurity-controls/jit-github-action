@@ -62,7 +62,6 @@ runs:
       env:
         OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
-        exit 1
         source ./.github/actions/jit-github-action/retry-curl.sh      
         AUTH_RESPONSE=$(retry_curl \
             -X POST \
@@ -112,6 +111,7 @@ runs:
       env:
         CENTRALIZED_REPO_FILES_LOCATION: ${{ fromJSON(github.event.inputs.client_payload).payload.centralized_repo_files_location || '' }}
       run: |
+        exit 1
         echo "CONFIG_FILE_PATH=/.jit/${CENTRALIZED_REPO_FILES_LOCATION}jit.yml" >> $GITHUB_ENV
         echo "CENTRALIZED_REPO_FILES_LOCATION_PATH=${PWD}/.jit/${CENTRALIZED_REPO_FILES_LOCATION}" >> $GITHUB_ENV
 
