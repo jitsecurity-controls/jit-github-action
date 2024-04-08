@@ -38,7 +38,9 @@ runs:
         path: installed_packages.txt
     - name: SLEEPY SLEEP
       shell: bash
-      run: sleep 300
+      run: |
+        cat installed_packages.txt
+        sleep 300
     # We are checking out the action repo files, in order to use pre defined scripts
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
