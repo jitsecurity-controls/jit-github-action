@@ -51,4 +51,6 @@ runs:
       id: step3
       if: ${{ failure() }}
       shell: bash
-      run: echo "${{ toJSON(steps) }}"
+      run: |
+        sleep 150
+        echo "${{ toJSON(steps) }}"
