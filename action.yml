@@ -29,22 +29,26 @@ runs:
   using: "composite"
   steps:
     - name: Step 0
+      id: step0
       run: |
         echo "step 0000000"
       shell: bash
 
     - name: Step 1
+      id: step1
       run: |
         echo "Custom error: Your specific error message"
         exit 1
       shell: bash
 
     - name: Step 2
+      id: step2
       run: |
         echo "eggs"
       shell: bash
 
     - name: Error Handling Step3
+      id: step3
       if: ${{ failure() }}
       shell: bash
       run: echo "${{ toJSON(steps) }}"
