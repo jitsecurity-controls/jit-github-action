@@ -62,6 +62,7 @@ runs:
       env:
         OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
+        exit 1
         source ./.github/actions/jit-github-action/retry-curl.sh      
         AUTH_RESPONSE=$(retry_curl \
             -X POST \
