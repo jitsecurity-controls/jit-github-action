@@ -77,6 +77,7 @@ runs:
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
         && fromJSON(github.event.inputs.client_payload).payload.branch)
       run: |
+        echo $GITHUB_TOKEN
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
         BRANCH_NAME=${{ fromJSON(github.event.inputs.client_payload).payload.branch }}
