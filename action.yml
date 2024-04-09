@@ -72,8 +72,6 @@ runs:
       continue-on-error: true
       id: sparse-checkout-repository
       shell: bash
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
