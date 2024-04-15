@@ -294,6 +294,7 @@ runs:
     - name: Temp Raise Error
       if: always()
       run: exit 0
+      shell: bash
 
     - name: Notify Jit on Failure
       if: failure()
