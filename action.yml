@@ -291,6 +291,10 @@ runs:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
 
+    - name: Temp Raise Error
+      if: always()
+      run: exit 0
+
     - name: Notify Jit on Failure
       if: failure()
       uses: actions/github-script@v6
