@@ -290,3 +290,34 @@ runs:
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
+
+    - name: Notify Jit on Failure
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          console.log(`Notifying Jit of failure`);
+          const headers = {
+            'Authorization': `Bearer ${{ steps.oidc-auth.outputs.jit_token }}`,
+            'Content-Type': 'application/json'
+          };
+          console.log(`Headers: ${JSON.stringify(headers)}`);
+          const body = {
+            execution_id: "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}",
+            jit_event_id: "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
+            status: "failed"
+          };
+          console.log(`Notifying Jit of failure with body: ${JSON.stringify(body)}`);
+          
+          (async () => {
+            const responseTemp = await github.request('GET https://api.ipify.org?format=json');
+            const ip = responseTemp.data.ip;
+            
+            const response = await github.request('POST https://api.jit.io/executions/complete', {
+              headers: headers,
+              body: JSON.stringify(body)
+            });
+            if (response.status !== 200) {
+              throw new Error(`Failed to notify Jit of failure. HTTP status code: ${response.status}`);
+            }
+          })();
