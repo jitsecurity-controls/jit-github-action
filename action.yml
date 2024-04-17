@@ -304,8 +304,9 @@ runs:
       with:
         script: |
           console.log(`Notifying Jit of failure`);
+          const jit_jwt_token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
           const headers = {
-            'Authorization': `Bearer ${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`,
+            'Authorization': `Bearer ${jit_jwt_token}`,
             'Content-Type': 'application/json',
           };
           console.log(`Headers: ${JSON.stringify(headers)}`);
@@ -317,7 +318,7 @@ runs:
           
           (async () => {
             const url = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/workflow-failed }}`
-            console.log(`URL=${url}`)
+            console.log(`URL=${url}`);
             const response = await github.request(`POST ${url}`, {
               headers: headers,
               body: JSON.stringify(body),
