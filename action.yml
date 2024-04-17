@@ -315,16 +315,21 @@ runs:
             "errors": [
               {
                 "error_type": "vendor_error",
-                "error_body": "Jit GitHub action failed to run the control",
+                "error_body": "Jit GitHub action failed to run the control"
               }
             ]
           });
           const requestOptions = {
-            method: 'POST',
+            method: "POST",
             headers: headers,
             body: body,
-            redirect: 'follow',
+            redirect: "follow"
           };
+          // Using `fetch` to send the POST request
+          fetch(`${baseUrl}/execution/completed`, requestOptions)
+            .then(response => response.text()) // or response.json() if response is JSON
+            .then(result => console.log(`Result: ${result}`))
+            .catch(error => console.error(`Error: ${error}`));
 
           fetch(`${url}`, requestOptions)
             .then(response => response.text())
