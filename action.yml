@@ -309,22 +309,22 @@ runs:
             'Content-Type': 'application/json'
           };
           const body = JSON.stringify({
-            "execution_id": executionId,
-            "jit_event_id": jitEventId,
-            "status": "failed",
-            "has_findings": false,
-            "errors": [
+            execution_id: executionId,
+            jit_event_id: jitEventId,
+            status: 'failed',
+            has_findings: false,
+            errors: [
               {
-                "error_type": "vendor_error",
-                "error_body": "Jit GitHub action failed to run the control"
-              }
-            ]
+                error_type: 'vendor_error',
+                error_body: 'Jit GitHub action failed to run the control',
+              },
+            ],
           });
           const requestOptions = {
-            method: "POST",
+            method: 'POST',
             headers: headers,
             body: body,
-            redirect: "follow"
+            redirect: 'follow',
           };
           
           fetch(`${baseUrl}/execution/completed`, requestOptions)
