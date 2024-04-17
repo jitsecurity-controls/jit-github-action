@@ -92,7 +92,7 @@ runs:
           echo "Got fatal error when calling auth oidc token with jit server"
           exit 101
         fi
-  
+
     - name: Link job ID to Execution
       shell: bash
       continue-on-error: true
