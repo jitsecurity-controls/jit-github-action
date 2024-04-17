@@ -62,7 +62,8 @@ runs:
       env:
         OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
-        source ./.github/actions/jit-github-action/retry-curl.sh      
+        source ./.github/actions/jit-github-action/retry-curl.sh
+        exit 101     
         AUTH_RESPONSE=$(retry_curl \
             -X POST \
             -H "Authorization: Bearer $OIDC_TOKEN" \
@@ -81,7 +82,6 @@ runs:
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-          exit 101
         elif [ $AUTH_RESPONSE_CODE = 422 ]; then
           echo "Repo is no longer accessible for the installation"
           exit 104
@@ -299,6 +299,7 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
+          console.log('Workflow failed - notifying Jit servers');
           const token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
           const jitEventId = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}`;
           const executionId = `${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}`;
@@ -325,8 +326,8 @@ runs:
             body: body,
             redirect: "follow"
           };
-          // Using `fetch` to send the POST request
+          
           fetch(`${baseUrl}/execution/completed`, requestOptions)
-            .then(response => response.text()) // or response.json() if response is JSON
-            .then(result => console.log(`Result: ${result}`))
+            .then(response => response.text())
+            .then(result => console.log('Successfully notified Jit servers'))
             .catch(error => console.error(`Error: ${error}`));
