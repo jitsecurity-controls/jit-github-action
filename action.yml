@@ -299,33 +299,31 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
-          console.log('Workflow failed - notifying Jit servers');
           const token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
           const jitEventId = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}`;
           const executionId = `${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}`;
           const baseUrl = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}`;
-          const url = `${baseUrl}/execution/completed`;
-
           const headers = {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           };
-
-          const body = JSON.stringify(
-            {
-              execution_id: executionId,
-              jit_event_id: jitEventId,
-              status: 'failed',
-              has_findings: false,
-              errors: [{'error_type': 'vendor_error', 'error_body': 'Jit GitHub action failed to run the control'}],
-            },
-          );
-
+          const body = JSON.stringify({
+            "execution_id": executionId,
+            "jit_event_id": jitEventId,
+            "status": "failed",
+            "has_findings": false,
+            "errors": [
+              {
+                "error_type": "vendor_error",
+                "error_body": "Jit GitHub action failed to run the control",
+              }
+            ]
+          });
           const requestOptions = {
             method: 'POST',
             headers: headers,
             body: body,
-            redirect: 'follow'
+            redirect: 'follow',
           };
 
           fetch(`${url}`, requestOptions)
