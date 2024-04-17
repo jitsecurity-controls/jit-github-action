@@ -28,6 +28,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Temp Raise Error
+      if: always()
+      run: exit 1
+      shell: bash
+    # We are checking out the action repo files, in order to use pre defined scripts
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
       with:
