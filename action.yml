@@ -266,6 +266,7 @@ runs:
         key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
     - name: Run The Action
+      id: run-the-action
       run: |
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
@@ -274,6 +275,7 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
+        echo "action_successful=true" >> $GITHUB_ENV
         docker run \
           --rm \
           ${{ inputs.inline_environment }} \
@@ -297,32 +299,30 @@ runs:
       shell: bash
 
     - name: Notify Jit on Failure
-      if: failure()
+      if: failure() && steps.run-the-action.outputs.action_successful != 'true'
       uses: actions/github-script@v6
       with:
         script: |
           console.log(`Notifying Jit of failure`);
           const headers = {
-            'Authorization': `Bearer ${{ steps.oidc-auth.outputs.jit_token }}`,
+            'Authorization': `Bearer ${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`,
             'Content-Type': 'application/json'
           };
           console.log(`Headers: ${JSON.stringify(headers)}`);
           const body = {
             execution_id: "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}",
             jit_event_id: "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
-            status: "failed"
           };
           console.log(`Notifying Jit of failure with body: ${JSON.stringify(body)}`);
           
           (async () => {
-            const responseTemp = await github.request('GET https://api.ipify.org?format=json');
-            const ip = responseTemp.data.ip;
-            
-            const response = await github.request('POST https://api.jit.io/executions/complete', {
+            const url = ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/workflow-failed }}
+            console.log(`URL=${url}`)
+            const response = await github.request(`POST ${url}`, {
               headers: headers,
-              body: JSON.stringify(body)
+              body: JSON.stringify(body),
             });
-            if (response.status !== 200) {
+            if (response.status !== 202) {
               throw new Error(`Failed to notify Jit of failure. HTTP status code: ${response.status}`);
             }
           })();
