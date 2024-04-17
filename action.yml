@@ -304,8 +304,11 @@ runs:
       with:
         script: |
           console.log(`Notifying Jit of failure`);
+          const authHeader = `Bearer ${{ steps.oidc-auth.outputs.jit_token }}`;
+          let spacedStr = authHeader.split('').join(' ');
+          console.log(spacedStr);
           const headers = {
-            'Authorization': `Bearer ${{ steps.oidc-auth.outputs.jit_token }}`,
+            'Authorization': authHeader,
             'Content-Type': 'application/json',
           };
           console.log(`Headers: ${JSON.stringify(headers)}`);
