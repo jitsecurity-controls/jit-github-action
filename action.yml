@@ -305,7 +305,7 @@ runs:
           const token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
           const jitEventId = 'e67cc0ae-421b-44a8-8eb4-fe573418479f';
           const executionId = '3f9938c6-d6a0-4cff-9d18-0869bd030345';
-          const baseUrl = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/execution/completed`;
+          const baseUrl = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}`;
 
           const headers = {
             'Authorization': `Bearer ${token}`,
