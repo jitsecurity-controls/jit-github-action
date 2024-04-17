@@ -330,8 +330,3 @@ runs:
             .then(response => response.text()) // or response.json() if response is JSON
             .then(result => console.log(`Result: ${result}`))
             .catch(error => console.error(`Error: ${error}`));
-
-          fetch(`${url}`, requestOptions)
-            .then(response => response.text())
-            .then(result => console.log(`Succesfully notified Jit servers'))
-            .catch(error => console.error(`Error: ${error}`));
