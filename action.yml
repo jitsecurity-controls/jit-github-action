@@ -81,6 +81,7 @@ runs:
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
           echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
+          exit 101
         elif [ $AUTH_RESPONSE_CODE = 422 ]; then
           echo "Repo is no longer accessible for the installation"
           exit 104
