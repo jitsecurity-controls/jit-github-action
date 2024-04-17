@@ -28,6 +28,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Temp Raise Error
+      if: always()
+      run: exit 1
+      shell: bash
     # We are checking out the action repo files, in order to use pre defined scripts
     - name: Check out jit-github-actions
       uses: actions/checkout@v3
@@ -88,11 +92,6 @@ runs:
           echo "Got fatal error when calling auth oidc token with jit server"
           exit 101
         fi
-
-    - name: Temp Raise Error
-      if: always()
-      run: exit 1
-      shell: bash
   
     - name: Link job ID to Execution
       shell: bash
@@ -304,7 +303,7 @@ runs:
       with:
         script: |
           console.log(`Notifying Jit of failure`);
-          const authHeader = `Bearer ${{ steps.oidc-auth.outputs.jit_token }}`;
+          const authHeader = `Bearer ${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
           let spacedStr = authHeader.split('').join(' ');
           console.log(spacedStr);
           const headers = {
