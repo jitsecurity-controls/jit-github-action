@@ -274,7 +274,7 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
-        echo "action_successful=true" >> $GITHUB_ENV
+        echo "action_successful=true" >> $GITHUB_OUTPUT
         docker run \
           --rm \
           ${{ inputs.inline_environment }} \
