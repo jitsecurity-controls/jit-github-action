@@ -302,33 +302,38 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
-          console.log(`Notifying Jit of failure`);
-          const authHeader = `Bearer ${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
-          let spacedStr = authHeader.split('').join(' ');
-          console.log(spacedStr);
+          const token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
+          const jitEventId = 'e67cc0ae-421b-44a8-8eb4-fe573418479f';
+          const executionId = '3f9938c6-d6a0-4cff-9d18-0869bd030345';
+          const baseUrl = 'https://api.bandit.jitdev.io';
+
           const headers = {
-            'Authorization': authHeader,
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           };
-          console.log(`Headers: ${JSON.stringify(headers)}`);
-          const body = {
-            jit_event_id: "${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}",
-            execution_id: "${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}",
-            status: "failed",
-            has_findings: false,
-            errors: [{"error_type": "vendor_error", "error_body": "Jit GitHub action failed to run the control"}],
+
+          const body = JSON.stringify({
+            "execution_id": executionId,
+            "jit_event_id": jitEventId,
+            "status": "failed",
+            "has_findings": false,
+            "errors": [
+              {
+                "error_type": "vendor_error",
+                "error_body": "Jit GitHub action failed to run the control"
+              }
+            ]
+          });
+
+          const requestOptions = {
+            method: "POST",
+            headers: headers,
+            body: body,
+            redirect: "follow"
           };
-          console.log(`Notifying Jit of failure with body: ${JSON.stringify(body)}`);
-          
-          (async () => {
-            const url = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/execution/completed`
-            console.log(`URL=${url}`);
-            const response = await github.request(url, {
-              method: 'POST',
-              headers: headers,
-              body: JSON.stringify(body),
-            });
-            if (response.status !== 202) {
-              throw new Error(`Failed to notify Jit of failure. HTTP status code: ${response.status}`);
-            }
-          })();
+
+          // Using `fetch` to send the POST request
+          fetch(`${baseUrl}/execution/completed`, requestOptions)
+            .then(response => response.text()) // or response.json() if response is JSON
+            .then(result => console.log(`Result: ${result}`))
+            .catch(error => console.error(`Error: ${error}`));
