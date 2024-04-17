@@ -321,7 +321,7 @@ runs:
           console.log(`Notifying Jit of failure with body: ${JSON.stringify(body)}`);
           
           (async () => {
-            const url = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/workflow/failed`
+            const url = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/execution/completed`
             console.log(`URL=${url}`);
             const response = await github.request(`POST ${url}`, {
               headers: headers,
