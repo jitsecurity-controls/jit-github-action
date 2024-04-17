@@ -304,7 +304,7 @@ runs:
       with:
         script: |
           console.log(`Notifying Jit of failure`);
-          const jit_jwt_token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
+          const jit_jwt_token = ${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }};
           const headers = {
             'Authorization': `Bearer ${jit_jwt_token}`,
             'Content-Type': 'application/json',
