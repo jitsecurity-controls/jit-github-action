@@ -62,7 +62,7 @@ runs:
       env:
         OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
-        source ./.github/actions/jit-github-action/retry-curl.sh      
+        source ./.github/actions/jit-github-action/retry-curl.sh
         AUTH_RESPONSE=$(retry_curl \
             -X POST \
             -H "Authorization: Bearer $OIDC_TOKEN" \
@@ -266,6 +266,7 @@ runs:
         key: ${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
     - name: Run The Action
+      id: run-the-action
       run: |
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
@@ -274,6 +275,7 @@ runs:
         then
           echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
         fi
+        echo "action_successful=true" >> $GITHUB_OUTPUT
         docker run \
           --rm \
           ${{ inputs.inline_environment }} \
@@ -290,3 +292,38 @@ runs:
       env:
         # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
         mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
+
+    - name: Notify Jit on Failure
+      if: failure() && steps.run-the-action.outputs.action_successful != 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          console.log('Workflow failed - notifying Jit servers');
+          const token = `${{ fromJSON(github.event.inputs.client_payload).jit_jwt_token }}`;
+          const jitEventId = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }}`;
+          const executionId = `${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }}`;
+          const baseUrl = `${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}`;
+          const headers = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          };
+          const body = JSON.stringify(
+            {
+              execution_id: executionId,
+              jit_event_id: jitEventId,
+              status: 'failed',
+              has_findings: false,
+              errors: [{error_type: 'vendor_error', error_body: 'Jit GitHub action failed to run the control'}],
+            },
+          );
+          const requestOptions = {
+            method: 'POST',
+            headers: headers,
+            body: body,
+            redirect: 'follow',
+          };
+          
+          fetch(`${baseUrl}/execution/completed`, requestOptions)
+            .then(response => response.text())
+            .then(result => console.log('Successfully notified Jit servers'))
+            .catch(error => console.error(`Error: ${error}`));
