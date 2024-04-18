@@ -63,7 +63,6 @@ runs:
         OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
         source ./.github/actions/jit-github-action/retry-curl.sh
-        exit 101     
         AUTH_RESPONSE=$(retry_curl \
             -X POST \
             -H "Authorization: Bearer $OIDC_TOKEN" \
