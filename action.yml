@@ -62,7 +62,6 @@ runs:
       env:
         OIDC_TOKEN: ${{ steps.get-oidc-token-from-github.outputs.OIDC_TOKEN }}
       run: |
-        exit 1
         random_number=$(( RANDOM % 2 ))
         if [ $random_number -eq 1 ]; then
             echo "Exiting with status 1"
