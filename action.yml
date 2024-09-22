@@ -140,8 +140,10 @@ runs:
 
         echo "(info) Cloning the repository without files..."
         # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
-        git clone --no-checkout -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
+        git clone --no-checkout --filter-blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
+
+        git fetch --unshallow
 
         echo "(info) Fetching the base commit and list of modified files..."
         git fetch origin $BASE_SHA $HEAD_SHA
