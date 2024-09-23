@@ -159,6 +159,9 @@ runs:
 
         echo "(info) Fetching missing git data"
         git fetch --unshallow --filter=blob:all
+        git fetch --all
+        git fetch --deepen=1000000
+        git read-tree -mu HEAD
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
     - name: Checkout repository
