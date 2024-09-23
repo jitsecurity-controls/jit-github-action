@@ -143,8 +143,6 @@ runs:
         git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
         cd code/
 
-        git fetch --unshallow
-
         echo "(info) Fetching the base commit and list of modified files..."
         git fetch origin $BASE_SHA $HEAD_SHA
         git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
@@ -158,6 +156,9 @@ runs:
         echo "(info) Checked out the following files:"
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
+
+        echo "(info) Performing a sparse checkout reapply"
+        git sparse-checkout reapply
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
     - name: Checkout repository
