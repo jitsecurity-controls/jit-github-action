@@ -187,7 +187,7 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ inputs.security_control }}")  # replace / with __ to avoid / interpreted as directory separator
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control }}")  # replace / with __ to avoid / interpreted as directory separator  # TODO: Avichay
         echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
@@ -232,14 +232,14 @@ runs:
 
     - name: Pull image
       shell: bash
-      run: docker pull ${{ inputs.security_control }}
+      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control }}  # TODO: Avichay
 
     - name: Set image id
       continue-on-error: true
       id: set-image-id
       shell: bash
       run: |
-        IMAGE_ID=$(docker image inspect ${{ inputs.security_control }} | jq -r '.[0].Id')
+        IMAGE_ID=$(docker image inspect ${{ fromJSON(github.event.inputs.client_payload).payload.security_control }} | jq -r '.[0].Id')  # TODO: avichay
         echo "(info) IMAGE_ID: $IMAGE_ID"
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
@@ -256,7 +256,7 @@ runs:
           echo "(info) Removing old image from cache"
           rm ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
         fi
-        docker save ${{ inputs.security_control }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
+        docker save ${{ fromJSON(github.event.inputs.client_payload).payload.security_control }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar  # TODO: Avichay
 
     - uses: actions/cache/save@v3
       continue-on-error: true
@@ -270,20 +270,15 @@ runs:
       run: |
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
-        echo FAIL_ON_FINDINGS=${{ inputs.fail_on_findings }} >> /tmp/docker_env.txt
-        if [ -n "${{ inputs.security_control_output_file }}" ]
-        then
-          echo SECURITY_CONTROL_OUTPUT_FILE=${{ inputs.security_control_output_file }} >> /tmp/docker_env.txt
-        fi
+        echo FAIL_ON_FINDINGS=true >> /tmp/docker_env.txt
+        # TODO: Avichay - check if it ok to get rid of security_control_output_file
         echo "action_successful=true" >> $GITHUB_OUTPUT
         docker run \
           --rm \
-          ${{ inputs.inline_environment }} \
           --env-file /tmp/docker_env.txt \
-          ${{ inputs.container_args }} \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
-          ${{ inputs.security_control }} \
+          ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} \  # TODO: Avichay
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
