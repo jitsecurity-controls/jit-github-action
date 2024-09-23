@@ -158,9 +158,7 @@ runs:
         echo "(info) Done checking out modified files"
 
         echo "(info) Fetching missing git data"
-        git fetch --all
-        git fetch --deepen=1000000
-        git read-tree -mu HEAD
+        git fetch --no-filter --recurse-submodules=on-demand
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
     - name: Checkout repository
