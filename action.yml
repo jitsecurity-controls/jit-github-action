@@ -158,7 +158,6 @@ runs:
         echo "(info) Done checking out modified files"
 
         echo "(info) Fetching missing git data"
-        git fetch --unshallow --filter=blob:all
         git fetch --all
         git fetch --deepen=1000000
         git read-tree -mu HEAD
