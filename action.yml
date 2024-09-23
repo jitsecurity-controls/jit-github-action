@@ -1,29 +1,5 @@
 name: 'Jit security-controls action'
 description: 'Runs a Jit security-control on a target dir'
-inputs:
-  container_args:
-    description: 'container additional args'
-    required: false
-    default: ""
-  security_control:
-    description: "Docker image tag path of security control to execute"
-    required: true
-  security_control_output_file:
-    description: "path to the security control output"
-    required: false
-    default: ""
-  fail_on_findings:
-    description: "fail control when finding is found"
-    required: false
-    default: "true"
-  fail_if_cannot_checkout:
-    description: "fail control if cannot checkout original repo"
-    required: false
-    default: "true"
-  inline_environment:
-    description: "inline environment variables to be passed to the container"
-    required: false
-    default: ""
 
 runs:
   using: "composite"
@@ -176,7 +152,7 @@ runs:
 
     - name: Exit if checkout failure is fatal
       shell: bash
-      if: (steps.checkout-repository.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich' && inputs.fail_if_cannot_checkout == 'true'
+      if: (steps.checkout-repository.outcome == 'failure') && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
       run: |
         echo "(error) Repository checkout failed, can't continue job execution"
         exit 102
@@ -187,7 +163,7 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control }}")  # replace / with __ to avoid / interpreted as directory separator  # TODO: Avichay
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")  # replace / with __ to avoid / interpreted as directory separator  # TODO: Avichay
         echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
@@ -232,14 +208,14 @@ runs:
 
     - name: Pull image
       shell: bash
-      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control }}  # TODO: Avichay
+      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}  # TODO: Avichay
 
     - name: Set image id
       continue-on-error: true
       id: set-image-id
       shell: bash
       run: |
-        IMAGE_ID=$(docker image inspect ${{ fromJSON(github.event.inputs.client_payload).payload.security_control }} | jq -r '.[0].Id')  # TODO: avichay
+        IMAGE_ID=$(docker image inspect ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} | jq -r '.[0].Id')  # TODO: avichay
         echo "(info) IMAGE_ID: $IMAGE_ID"
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
@@ -256,7 +232,7 @@ runs:
           echo "(info) Removing old image from cache"
           rm ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
         fi
-        docker save ${{ fromJSON(github.event.inputs.client_payload).payload.security_control }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar  # TODO: Avichay
+        docker save ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar  # TODO: Avichay
 
     - uses: actions/cache/save@v3
       continue-on-error: true
