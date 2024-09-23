@@ -157,8 +157,8 @@ runs:
         cat /tmp/modified_files.txt
         echo "(info) Done checking out modified files"
 
-        echo "(info) Performing a sparse checkout reapply"
-        git sparse-checkout reapply
+        echo "(info) Performing a head fetch"
+        git checkout HEAD
 
     # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
     - name: Checkout repository
