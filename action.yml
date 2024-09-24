@@ -1,5 +1,10 @@
 name: 'Jit security-controls action'
 description: 'Runs a Jit security-control on a target dir'
+inputs:
+  inline_environment:
+    description: "inline environment variables to be passed to the container"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
