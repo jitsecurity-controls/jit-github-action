@@ -256,6 +256,7 @@ runs:
         echo "action_successful=true" >> $GITHUB_OUTPUT
         docker run \
           --rm \
+          ${{ inputs.inline_environment }} \
           --env-file /tmp/docker_env.txt \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
