@@ -168,7 +168,7 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")  # replace / with __ to avoid / interpreted as directory separator  # TODO: Avichay
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")  # replace / with __ to avoid / interpreted as directory separator
         echo "(info) CACHE_FILE: $CACHE_FILE" 
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
@@ -213,14 +213,14 @@ runs:
 
     - name: Pull image
       shell: bash
-      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}  # TODO: Avichay
+      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
 
     - name: Set image id
       continue-on-error: true
       id: set-image-id
       shell: bash
       run: |
-        IMAGE_ID=$(docker image inspect ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} | jq -r '.[0].Id')  # TODO: avichay
+        IMAGE_ID=$(docker image inspect ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} | jq -r '.[0].Id')
         echo "(info) IMAGE_ID: $IMAGE_ID"
         echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
 
@@ -237,7 +237,7 @@ runs:
           echo "(info) Removing old image from cache"
           rm ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
         fi
-        docker save ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar  # TODO: Avichay
+        docker save ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
     - uses: actions/cache/save@v3
       continue-on-error: true
@@ -260,7 +260,7 @@ runs:
           --env-file /tmp/docker_env.txt \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
           ${{ env.mount_original_repo_command }} \
-          ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} \  # TODO: Avichay
+          ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} \
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
