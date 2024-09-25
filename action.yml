@@ -193,7 +193,7 @@ runs:
           exit 103
         fi
 
-    - uses: actions/cache/restore@v3
+    - uses: actions/cache/restore@v4
       if: steps.set-cache-file.outputs.cache_file != ''
       id: cache-docker-image
       continue-on-error: true
@@ -239,7 +239,7 @@ runs:
         fi
         docker save ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} -o ci/cache/docker/${{ steps.set-cache-file.outputs.cache_file }}@${{ steps.set-image-id.outputs.image_id }}.tar
 
-    - uses: actions/cache/save@v3
+    - uses: actions/cache/save@v4
       continue-on-error: true
       if: steps.save-image.conclusion == 'success'
       with:
