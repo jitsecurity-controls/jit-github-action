@@ -1,0 +1,43 @@
+name: 'Deploy jit-github-action'
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number to deploy'
+        required: true
+        type: string
+jobs:
+  create-a-new-version-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          body: |
+            Version ${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  tag-as-latest:
+    needs: [ create-a-new-version-tag ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+
+      - name: Create or update 'latest' tag
+        run: |
+          git fetch --tags
+          git tag -f latest ${{ github.event.inputs.version }}
+          git push origin -f latest
