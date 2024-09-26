@@ -252,7 +252,6 @@ runs:
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=true >> /tmp/docker_env.txt
-        # TODO: Avichay - check if it ok to get rid of security_control_output_file
         echo "action_successful=true" >> $GITHUB_OUTPUT
         docker run \
           --rm \
