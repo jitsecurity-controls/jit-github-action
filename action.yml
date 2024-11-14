@@ -111,8 +111,9 @@ runs:
         GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
       if: >-
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
-        && (fromJSON(github.event.inputs.client_payload).payload.commits.base_sha && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
-        && fromJSON(github.event.inputs.client_payload).payload.branch)
+        && fromJSON(github.event.inputs.client_payload).payload.commits.base_sha
+        && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
+        && fromJSON(github.event.inputs.client_payload).payload.branch
       run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
