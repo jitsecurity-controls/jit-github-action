@@ -103,74 +103,6 @@ runs:
         ref: ''
         path: ".jit/"
 
-    - name: Sparse checkout repository
-      continue-on-error: true
-      id: sparse-checkout-repository
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ steps.oidc-auth.outputs.github_token }}
-      if: >-
-        ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
-        && fromJSON(github.event.inputs.client_payload).payload.commits.base_sha
-        && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
-        && fromJSON(github.event.inputs.client_payload).payload.branch 
-        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'secret-detection'
-        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
-      run: |
-        BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
-        HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
-        BRANCH_NAME=${{ fromJSON(github.event.inputs.client_payload).payload.branch }}
-        FULL_REPO_PATH=${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-
-        echo "(info) Cloning the repository without files..."
-        # clone branch (-b) with only git history (--no-checkout), excluding file contents (--filter=blob:none).
-        git clone --no-checkout --filter=blob:none -b ${BRANCH_NAME} https://x-access-token:${GITHUB_TOKEN}@github.com/${FULL_REPO_PATH}.git code/
-        cd code/
-
-        echo "(info) Fetching the base commit and list of modified files..."
-        git fetch origin $BASE_SHA $HEAD_SHA
-        git diff --name-only $BASE_SHA...$HEAD_SHA > /tmp/modified_files.txt
-
-        echo "(info) Initializing sparse checkout and checking out modified files..."
-        # use the --no-cone flag because we're providing a list of files which is not supported by cone mode
-        git sparse-checkout init --no-cone
-        cat /tmp/modified_files.txt > .git/info/sparse-checkout
-        git checkout $BRANCH_NAME
-
-        echo "(info) Checked out the following files:"
-        cat /tmp/modified_files.txt
-        echo "(info) Done checking out modified files"
-
-    # scans default branches and serves as a fallback for the sparse-checkout-repository step in case it fails
-    - name: Checkout repository
-      # we don't want enrichment to fail the action on empty repo, it has its own logic to handle it
-      continue-on-error: true
-      id: checkout-repository
-      # this if should pass if there is not runner setup (old flow would checkout always) or when new flow ask to checkout
-      if: >-
-        ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
-        && steps.sparse-checkout-repository.outcome != 'success'
-        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'secret-detection'
-        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
-      uses: actions/checkout@v3
-      with:
-        repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
-        ref: ${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
-        fetch-depth: 0
-        token: ${{ steps.oidc-auth.outputs.github_token }}
-        path: "code/"
-
-    - name: Exit if checkout failure is fatal
-      shell: bash
-      if: >-
-        steps.checkout-repository.outcome == 'failure' &&
-        fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'  &&
-        fromJSON(github.event.inputs.client_payload).payload.fail_if_cannot_checkout == true
-        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'secret-detection'
-      run: |
-        echo "(error) Repository checkout failed, can't continue job execution"
-        exit 102
-
     # the cache_file is the image name with / replaced with __, we use it to query the cache storage together with the digest
     - name: Set cache_file value
       id: set-cache-file
@@ -267,7 +199,6 @@ runs:
           ${{ inputs.inline_environment }} \
           --env-file /tmp/docker_env.txt \
           -v ${CENTRALIZED_REPO_FILES_LOCATION_PATH}:/.jit \
-          ${{ env.mount_original_repo_command }} \
           ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }} \
           --execution-id ${{ fromJSON(github.event.inputs.client_payload).payload.execution_id }} \
           --event-id ${{ fromJSON(github.event.inputs.client_payload).payload.jit_event_id }} \
@@ -275,9 +206,6 @@ runs:
           --jit-token ${{ steps.oidc-auth.outputs.jit_token }} \
           --checkout-token ${{ steps.oidc-auth.outputs.github_token }}
       shell: bash
-      env:
-        # this field would set the original repo command mount command (would be mounted always in the old flow) and only if checkout = true in the new flow
-        mount_original_repo_command: ${{ fromJSON('["","-v $(pwd)/code:/code"]')[((!(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || (fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true)))] }}
 
     - name: Notify Jit on Failure
       if: failure() && steps.run-the-action.outputs.action_successful != 'true'
