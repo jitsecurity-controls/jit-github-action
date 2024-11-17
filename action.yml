@@ -115,6 +115,7 @@ runs:
         && fromJSON(github.event.inputs.client_payload).payload.commits.head_sha
         && fromJSON(github.event.inputs.client_payload).payload.branch 
         && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'secret-detection'
+        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
       run: |
         BASE_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.base_sha }}
         HEAD_SHA=${{ fromJSON(github.event.inputs.client_payload).payload.commits.head_sha }}
@@ -150,6 +151,7 @@ runs:
         ( !(fromJSON(github.event.inputs.client_payload).payload.runner_setup) || fromJSON(github.event.inputs.client_payload).payload.runner_setup.checkout == true )
         && steps.sparse-checkout-repository.outcome != 'success'
         && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'secret-detection'
+        && fromJSON(github.event.inputs.client_payload).payload.workflow_job_name != 'enrich'
       uses: actions/checkout@v3
       with:
         repository: ${{ fromJSON(github.event.inputs.client_payload).payload.full_repo_path }}
