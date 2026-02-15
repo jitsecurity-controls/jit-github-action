@@ -152,6 +152,73 @@ runs:
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
 
+    - name: Debug Docker registry auth (jit)
+      shell: bash
+      run: |
+        set -euo pipefail
+    
+        IMAGE="${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}"
+        REGISTRY="registry.jit.io"
+    
+        echo "=== Docker auth debug for $REGISTRY ==="
+        echo "IMAGE: $IMAGE"
+        echo "HOME: ${HOME}"
+        echo "DOCKER_CONFIG: ${DOCKER_CONFIG-<unset>}"
+        echo "DOCKER_AUTH_CONFIG: ${DOCKER_AUTH_CONFIG-<unset>}"
+        echo
+    
+        ISSUE=0
+    
+        # 1) Check if DOCKER_AUTH_CONFIG is set (often overrides ~/.docker/config.json)
+        if [ "${DOCKER_AUTH_CONFIG-}" != "" ]; then
+          echo "❌ ISSUE: DOCKER_AUTH_CONFIG is set. This can override ~/.docker/config.json and cause 'no basic auth credentials'."
+          ISSUE=1
+        else
+          echo "✅ OK: DOCKER_AUTH_CONFIG is not set."
+        fi
+    
+        # 2) Check if Docker config file exists and contains auth for registry.jit.io
+        DOCKER_CFG_FILE="${DOCKER_CONFIG-${HOME}/.docker}/config.json"
+    
+        if [ ! -f "$DOCKER_CFG_FILE" ]; then
+          echo "❌ ISSUE: Docker config.json not found at: $DOCKER_CFG_FILE"
+          ISSUE=1
+        else
+          echo "✅ OK: Found Docker config.json at: $DOCKER_CFG_FILE"
+          if grep -q "\"$REGISTRY\"" "$DOCKER_CFG_FILE"; then
+            echo "✅ OK: config.json contains an entry for $REGISTRY"
+          else
+            echo "❌ ISSUE: config.json does NOT contain an entry for $REGISTRY (login may have written elsewhere)."
+            ISSUE=1
+          fi
+        fi
+    
+        echo
+        # 3) Quick auth-requiring check (does not print secrets)
+        echo "Testing access with 'docker manifest inspect' (non-fatal, informative)..."
+        if docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
+          echo "✅ OK: docker manifest inspect succeeded (auth is being used)."
+        else
+          echo "❌ ISSUE: docker manifest inspect failed (likely auth not being applied)."
+          ISSUE=1
+        fi
+    
+        echo
+        if [ "$ISSUE" -eq 1 ]; then
+          echo "====== RESULT: ❌ AUTH CONFIG PROBLEM DETECTED ======"
+          echo "Most common fix: unset DOCKER_AUTH_CONFIG and/or pin DOCKER_CONFIG for login+pull."
+          echo "Example:"
+          echo "  unset DOCKER_AUTH_CONFIG"
+          echo "  export DOCKER_CONFIG=\"\${{ runner.temp }}/docker-config\""
+          echo "  mkdir -p \"\$DOCKER_CONFIG\""
+          echo "  (login...)"
+          echo "  docker pull \"$IMAGE\""
+          exit 0
+        else
+          echo "====== RESULT: ✅ NO OBVIOUS AUTH CONFIG ISSUE DETECTED ======"
+          exit 0
+        fi
+
     - name: Pull image
       shell: bash
       run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
