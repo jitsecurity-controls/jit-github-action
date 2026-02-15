@@ -58,11 +58,11 @@ runs:
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
 
-        if [ $AUTH_RESPONSE_CODE = 200 ]; then
+        if [ "$AUTH_RESPONSE_CODE" = "200" ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
-          echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
-          echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-        elif [ $AUTH_RESPONSE_CODE = 422 ]; then
+          echo "github_token=$(echo "$AUTH_RESPONSE_BODY" | jq -r '.github_token')" >> "$GITHUB_OUTPUT"
+          echo "jit_token=$(echo "$AUTH_RESPONSE_BODY" | jq -r '.jit_token')" >> "$GITHUB_OUTPUT"
+        elif [ "$AUTH_RESPONSE_CODE" = "422" ]; then
           echo "Repo is no longer accessible for the installation"
           exit 104
         else
@@ -119,9 +119,6 @@ runs:
       continue-on-error: true
       with:
         path: ci/cache/docker/
-        # Instead of attempting to get a cache hit, we just attempt to load the last version of the image from the cache.
-        # If the image reference has updated, docker pull will verify that and pull the new version, then we will
-        # save the new version to the cache
         key: 'null'
         restore-keys: ${{ steps.set-cache-file.outputs.cache_file }}@
 
@@ -131,14 +128,12 @@ runs:
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
 
-    # Pull using ephemeral auth config built from the registry token returned by Jit
-    # This avoids docker pull failures where dockerd doesn't receive/use forwarded creds.
-    - name: Pull image (ephemeral auth)
+    - name: Fetch registry password + login (registry.jit.io + backend)
+      id: registry-login
       shell: bash
       env:
         JIT_BASE_API: ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}
         JIT_TOKEN: ${{ steps.oidc-auth.outputs.jit_token }}
-        IMAGE: ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
       run: |
         set -euo pipefail
         source ./.github/actions/jit-github-action/retry-curl.sh
@@ -159,22 +154,41 @@ runs:
 
         REGISTRY_PASSWORD=${LOGIN_RESPONSE:0:${#LOGIN_RESPONSE}-3}
 
-        TMP_DOCKER_CONFIG="$(mktemp -d)"
-        trap 'rm -rf "$TMP_DOCKER_CONFIG"' EXIT
+        # Login to the front-door registry
+        echo "$REGISTRY_PASSWORD" | docker login --username AWS --password-stdin registry.jit.io
 
-        AUTH_B64="$(printf 'AWS:%s' "$REGISTRY_PASSWORD" | base64 -w 0)"
+        # Discover the backend registry host (often an ECR domain) via /v2/ redirect
+        BACKEND_HOST="$(curl -sSI https://registry.jit.io/v2/ | awk 'BEGIN{IGNORECASE=1} /^location:/{print $2}' | tr -d '\r' | awk -F/ '{print $3}' | tail -n 1 || true)"
+        if [ -n "${BACKEND_HOST}" ]; then
+          echo "(info) Discovered backend registry host: ${BACKEND_HOST}"
+          echo "$REGISTRY_PASSWORD" | docker login --username AWS --password-stdin "${BACKEND_HOST}" || true
+          echo "backend_host=${BACKEND_HOST}" >> "$GITHUB_OUTPUT"
+        else
+          echo "(info) No backend redirect detected from /v2/ (continuing)."
+          echo "backend_host=" >> "$GITHUB_OUTPUT"
+        fi
 
-        cat > "${TMP_DOCKER_CONFIG}/config.json" <<EOF
-        {
-          "auths": {
-            "registry.jit.io": {
-              "auth": "${AUTH_B64}"
-            }
-          }
-        }
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Pull + load via buildx (avoids dockerd pull auth forwarding issues)
+    - name: Pull image via Buildx (--pull --load)
+      shell: bash
+      env:
+        IMAGE: ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
+      run: |
+        set -euo pipefail
+
+        cat > /tmp/Dockerfile.pull <<EOF
+        FROM ${IMAGE}
         EOF
 
-        DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull "$IMAGE"
+        docker buildx build \
+          --pull \
+          --load \
+          -t "${IMAGE}" \
+          -f /tmp/Dockerfile.pull \
+          /tmp
 
     - name: Set image id
       continue-on-error: true
@@ -187,7 +201,6 @@ runs:
 
     - name: Save image in cache directory
       continue-on-error: true
-      # next if condition verifies we update the cache only if the image has changed (based on its id)
       if: (!contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id))
       id: save-image
       shell: bash
