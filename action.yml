@@ -54,15 +54,15 @@ runs:
             }' \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
-        
+
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
-        
-        if [ $AUTH_RESPONSE_CODE = 200 ]; then
+
+        if [ "$AUTH_RESPONSE_CODE" = "200" ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
-          echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
-          echo "jit_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.jit_token')" >> $GITHUB_OUTPUT
-        elif [ $AUTH_RESPONSE_CODE = 422 ]; then
+          echo "github_token=$(echo "$AUTH_RESPONSE_BODY" | jq -r '.github_token')" >> "$GITHUB_OUTPUT"
+          echo "jit_token=$(echo "$AUTH_RESPONSE_BODY" | jq -r '.jit_token')" >> "$GITHUB_OUTPUT"
+        elif [ "$AUTH_RESPONSE_CODE" = "422" ]; then
           echo "Repo is no longer accessible for the installation"
           exit 104
         else
@@ -109,30 +109,9 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")  # replace / with __ to avoid / interpreted as directory separator
-        echo "(info) CACHE_FILE: $CACHE_FILE" 
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")
+        echo "(info) CACHE_FILE: $CACHE_FILE"
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
-
-    - name: Login to docker registry
-      shell: bash
-      run: |
-        source ./.github/actions/jit-github-action/retry-curl.sh
-        LOGIN_RESPONSE=$(retry_curl \
-            -X POST \
-            -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
-            ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/authentication/registry/login
-        )
-        
-        LOGIN_RESPONSE_CODE=${LOGIN_RESPONSE: -3}
-        echo "Calling Login to Jit docker registery endpoint returned with response_code=$LOGIN_RESPONSE_CODE"
-        
-        if [ $LOGIN_RESPONSE_CODE = 200 ]; then
-          LOGIN_RESPONSE_BODY=${LOGIN_RESPONSE:0:${#LOGIN_RESPONSE}-3}
-          echo $LOGIN_RESPONSE_BODY | docker login --username AWS --password-stdin registry.jit.io
-        else
-          echo "Got fatal error when login to Jit docker registry"
-          exit 103
-        fi
 
     - uses: actions/cache/restore@v4
       if: steps.set-cache-file.outputs.cache_file != ''
@@ -140,9 +119,6 @@ runs:
       continue-on-error: true
       with:
         path: ci/cache/docker/
-        # Instead of attempting to get a cache hit, we just attempt to load the last version of the image from the cache.
-        # If the image reference has updated, docker pull will verify that and pull the new version, then we will
-        # save the new version to the cache
         key: 'null'
         restore-keys: ${{ steps.set-cache-file.outputs.cache_file }}@
 
@@ -152,9 +128,67 @@ runs:
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
 
-    - name: Pull image
+    - name: Fetch registry password + login (registry.jit.io + backend)
+      id: registry-login
       shell: bash
-      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
+      env:
+        JIT_BASE_API: ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}
+        JIT_TOKEN: ${{ steps.oidc-auth.outputs.jit_token }}
+      run: |
+        set -euo pipefail
+        source ./.github/actions/jit-github-action/retry-curl.sh
+
+        LOGIN_RESPONSE=$(retry_curl \
+          -X POST \
+          -H "Authorization: Bearer $JIT_TOKEN" \
+          "$JIT_BASE_API/authentication/registry/login"
+        )
+
+        LOGIN_RESPONSE_CODE=${LOGIN_RESPONSE: -3}
+        echo "Calling Login to Jit docker registry endpoint returned with response_code=$LOGIN_RESPONSE_CODE"
+
+        if [ "$LOGIN_RESPONSE_CODE" != "200" ]; then
+          echo "Got fatal error when fetching registry login token (code=$LOGIN_RESPONSE_CODE)"
+          exit 103
+        fi
+
+        REGISTRY_PASSWORD=${LOGIN_RESPONSE:0:${#LOGIN_RESPONSE}-3}
+
+        # Login to the front-door registry
+        echo "$REGISTRY_PASSWORD" | docker login --username AWS --password-stdin registry.jit.io
+
+        # Discover the backend registry host (often an ECR domain) via /v2/ redirect
+        BACKEND_HOST="$(curl -sSI https://registry.jit.io/v2/ | awk 'BEGIN{IGNORECASE=1} /^location:/{print $2}' | tr -d '\r' | awk -F/ '{print $3}' | tail -n 1 || true)"
+        if [ -n "${BACKEND_HOST}" ]; then
+          echo "(info) Discovered backend registry host: ${BACKEND_HOST}"
+          echo "$REGISTRY_PASSWORD" | docker login --username AWS --password-stdin "${BACKEND_HOST}" || true
+          echo "backend_host=${BACKEND_HOST}" >> "$GITHUB_OUTPUT"
+        else
+          echo "(info) No backend redirect detected from /v2/ (continuing)."
+          echo "backend_host=" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Pull + load via buildx (avoids dockerd pull auth forwarding issues)
+    - name: Pull image via Buildx (--pull --load)
+      shell: bash
+      env:
+        IMAGE: ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
+      run: |
+        set -euo pipefail
+
+        cat > /tmp/Dockerfile.pull <<EOF
+        FROM ${IMAGE}
+        EOF
+
+        docker buildx build \
+          --pull \
+          --load \
+          -t "${IMAGE}" \
+          -f /tmp/Dockerfile.pull \
+          /tmp
 
     - name: Set image id
       continue-on-error: true
@@ -167,7 +201,6 @@ runs:
 
     - name: Save image in cache directory
       continue-on-error: true
-      # next if condition verifies we update the cache only if the image has changed (based on its id)
       if: (!contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id))
       id: save-image
       shell: bash
@@ -189,11 +222,13 @@ runs:
 
     - name: Run The Action
       id: run-the-action
+      shell: bash
       run: |
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=true >> /tmp/docker_env.txt
         echo "action_successful=true" >> $GITHUB_OUTPUT
+
         docker run \
           --rm \
           ${{ inputs.inline_environment }} \
@@ -205,7 +240,6 @@ runs:
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
           --jit-token ${{ steps.oidc-auth.outputs.jit_token }} \
           --checkout-token ${{ steps.oidc-auth.outputs.github_token }}
-      shell: bash
 
     - name: Notify Jit on Failure
       if: failure() && steps.run-the-action.outputs.action_successful != 'true'
@@ -236,8 +270,8 @@ runs:
             body: body,
             redirect: 'follow',
           };
-          
+
           fetch(`${baseUrl}/execution/completed`, requestOptions)
             .then(response => response.text())
-            .then(result => console.log('Successfully notified Jit servers'))
+            .then(() => console.log('Successfully notified Jit servers'))
             .catch(error => console.error(`Error: ${error}`));
