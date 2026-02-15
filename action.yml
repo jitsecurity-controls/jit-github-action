@@ -54,10 +54,10 @@ runs:
             }' \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/github/auth
         )
-        
+
         AUTH_RESPONSE_CODE=${AUTH_RESPONSE: -3}
         echo "Calling OIDC Auth endpoint returned with response_code=$AUTH_RESPONSE_CODE"
-        
+
         if [ $AUTH_RESPONSE_CODE = 200 ]; then
           AUTH_RESPONSE_BODY=${AUTH_RESPONSE:0:${#AUTH_RESPONSE}-3}
           echo "github_token=$(echo $AUTH_RESPONSE_BODY | jq -r '.github_token')" >> $GITHUB_OUTPUT
@@ -109,11 +109,11 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")  # replace / with __ to avoid / interpreted as directory separator
-        echo "(info) CACHE_FILE: $CACHE_FILE" 
+        CACHE_FILE=$(sed 's/\//__/g' <<< "${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}")
+        echo "(info) CACHE_FILE: $CACHE_FILE"
         echo "cache_file=$CACHE_FILE" >> $GITHUB_OUTPUT
 
-    - name: Login to docker registry
+    - name: Login to docker registry (registry.jit.io)
       shell: bash
       run: |
         source ./.github/actions/jit-github-action/retry-curl.sh
@@ -122,21 +122,22 @@ runs:
             -H "Authorization: Bearer ${{ steps.oidc-auth.outputs.jit_token }}" \
             ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }}/authentication/registry/login
         )
-        
+
         LOGIN_RESPONSE_CODE=${LOGIN_RESPONSE: -3}
-        echo "Calling Login to Jit docker registery endpoint returned with response_code=$LOGIN_RESPONSE_CODE"
-        
+        echo "Calling Login to Jit docker registry endpoint returned with response_code=$LOGIN_RESPONSE_CODE"
+
         if [ $LOGIN_RESPONSE_CODE = 200 ]; then
           LOGIN_RESPONSE_BODY=${LOGIN_RESPONSE:0:${#LOGIN_RESPONSE}-3}
-          DOCKER_PASSWORD=$(echo $LOGIN_RESPONSE_BODY)
-          echo "=== DEBUG: Docker password (spaced) ==="
-          echo "$DOCKER_PASSWORD" | sed 's/./& /g'
-          echo "=== END DEBUG ==="
-          echo $LOGIN_RESPONSE_BODY | docker login --username AWS --password-stdin registry.jit.io
+          # Login (do NOT print token)
+          echo "$LOGIN_RESPONSE_BODY" | docker login --username AWS --password-stdin registry.jit.io
         else
           echo "Got fatal error when login to Jit docker registry"
           exit 103
         fi
+
+    # Setup Buildx to avoid Docker daemon credential forwarding issues with docker pull
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - uses: actions/cache/restore@v4
       if: steps.set-cache-file.outputs.cache_file != ''
@@ -144,9 +145,6 @@ runs:
       continue-on-error: true
       with:
         path: ci/cache/docker/
-        # Instead of attempting to get a cache hit, we just attempt to load the last version of the image from the cache.
-        # If the image reference has updated, docker pull will verify that and pull the new version, then we will
-        # save the new version to the cache
         key: 'null'
         restore-keys: ${{ steps.set-cache-file.outputs.cache_file }}@
 
@@ -156,95 +154,27 @@ runs:
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
 
-    - name: DEBUG - Is dockerd getting registry creds?
+    # Replaces: docker pull <image>
+    # Uses Buildx/BuildKit to pull + load into local docker engine reliably
+    - name: Pull image (via Buildx --pull --load)
       shell: bash
+      env:
+        IMAGE: ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
       run: |
         set -euo pipefail
-        IMAGE="${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}"
-        REGISTRY="registry.jit.io"
-    
-        echo "=== Docker auth forwarding debug ==="
-        echo "IMAGE: $IMAGE"
-        echo "HOME: $HOME"
-        echo "DOCKER_HOST: ${DOCKER_HOST-<unset>}"
-        echo "DOCKER_CONTEXT: ${DOCKER_CONTEXT-<unset>}"
-        echo
-    
-        ISSUE=0
-    
-        # 1) Make sure we're talking to the expected daemon
-        echo "--- docker context / daemon ---"
-        docker context show || true
-        docker info --format 'Server={{.ServerVersion}} RootDir={{.DockerRootDir}}' || true
-        echo
-    
-        if [ "${DOCKER_HOST-}" != "" ]; then
-          echo "❌ ISSUE: DOCKER_HOST is set ($DOCKER_HOST). You may be talking to a different daemon than expected."
-          ISSUE=1
-        else
-          echo "✅ OK: DOCKER_HOST is not set (default daemon via /var/run/docker.sock)."
-        fi
-    
-        # 2) Confirm the CLI has auth for the registry
-        CFG="${DOCKER_CONFIG-${HOME}/.docker}/config.json"
-        echo
-        echo "--- docker config ---"
-        echo "Using config: $CFG"
-        if [ ! -f "$CFG" ]; then
-          echo "❌ ISSUE: Docker config.json missing at $CFG"
-          ISSUE=1
-        else
-          if grep -q "\"$REGISTRY\"" "$CFG"; then
-            echo "✅ OK: config.json contains $REGISTRY auth entry."
-          else
-            echo "❌ ISSUE: config.json does NOT contain $REGISTRY auth entry."
-            ISSUE=1
-          fi
-        fi
-    
-        # 3) Key test: a daemon-side pull vs a client-side manifest inspect
-        echo
-        echo "--- client-side check (uses ~/.docker/config.json) ---"
-        if docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
-          echo "✅ OK: docker manifest inspect succeeded (CLI can auth to registry)."
-        else
-          echo "❌ ISSUE: docker manifest inspect failed (CLI cannot auth)."
-          ISSUE=1
-        fi
-    
-        echo
-        echo "--- daemon-side check (same as your failing pull) ---"
-        set +e
-        docker pull "$IMAGE" 2>&1 | tee /tmp/docker_pull_out.txt
-        PULL_RC=${PIPESTATUS[0]}
-        set -e
-    
-        if [ "$PULL_RC" -eq 0 ]; then
-          echo "✅ OK: docker pull succeeded (dockerd received creds)."
-        else
-          if grep -qi "no basic auth credentials" /tmp/docker_pull_out.txt; then
-            echo "❌ ISSUE: dockerd did not receive/use registry creds (no basic auth credentials)."
-            echo "   This confirms an auth-forwarding or daemon-context mismatch."
-          else
-            echo "❌ ISSUE: docker pull failed for another reason (see output above)."
-          fi
-          ISSUE=1
-        fi
-    
-        echo
-        if [ "$ISSUE" -eq 1 ]; then
-          echo "====== RESULT: ❌ PROBLEM DETECTED ======"
-          echo "Next step: force a dedicated DOCKER_CONFIG for both login and pull (see fix below)."
-        else
-          echo "====== RESULT: ✅ NO PROBLEM DETECTED ======"
-        fi
-    
-        # Never fail the workflow from debug
-        exit 0
+        cat > /tmp/Dockerfile.pull <<EOF
+        FROM ${IMAGE}
+        EOF
 
-    - name: Pull image
-      shell: bash
-      run: docker pull ${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}
+        # --pull: always check registry for newer base image
+        # --load: load result into the local docker engine so later `docker run` uses it
+        docker buildx build \
+          --pull \
+          --load \
+          --platform linux/amd64 \
+          -t "${IMAGE}" \
+          -f /tmp/Dockerfile.pull \
+          /tmp
 
     - name: Set image id
       continue-on-error: true
@@ -257,7 +187,6 @@ runs:
 
     - name: Save image in cache directory
       continue-on-error: true
-      # next if condition verifies we update the cache only if the image has changed (based on its id)
       if: (!contains(steps.cache-docker-image.outputs.cache-matched-key, steps.set-image-id.outputs.image_id))
       id: save-image
       shell: bash
@@ -279,11 +208,13 @@ runs:
 
     - name: Run The Action
       id: run-the-action
+      shell: bash
       run: |
         echo CONFIG_FILE_PATH=${CONFIG_FILE_PATH} > /tmp/docker_env.txt
         echo SOURCE_CODE_FOLDER=/code >> /tmp/docker_env.txt
         echo FAIL_ON_FINDINGS=true >> /tmp/docker_env.txt
         echo "action_successful=true" >> $GITHUB_OUTPUT
+
         docker run \
           --rm \
           ${{ inputs.inline_environment }} \
@@ -295,7 +226,6 @@ runs:
           --base-url ${{ fromJSON(github.event.inputs.client_payload).payload.jit_base_api }} \
           --jit-token ${{ steps.oidc-auth.outputs.jit_token }} \
           --checkout-token ${{ steps.oidc-auth.outputs.github_token }}
-      shell: bash
 
     - name: Notify Jit on Failure
       if: failure() && steps.run-the-action.outputs.action_successful != 'true'
@@ -326,8 +256,8 @@ runs:
             body: body,
             redirect: 'follow',
           };
-          
+
           fetch(`${baseUrl}/execution/completed`, requestOptions)
             .then(response => response.text())
-            .then(result => console.log('Successfully notified Jit servers'))
+            .then(() => console.log('Successfully notified Jit servers'))
             .catch(error => console.error(`Error: ${error}`));
