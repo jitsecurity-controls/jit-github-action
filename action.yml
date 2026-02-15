@@ -156,72 +156,91 @@ runs:
       continue-on-error: true
       run: docker load -i ci/cache/docker/${{ steps.cache-docker-image.outputs.cache-matched-key }}
 
-    - name: Debug Docker registry auth (jit)
+    - name: DEBUG - Is dockerd getting registry creds?
       shell: bash
       run: |
         set -euo pipefail
-    
         IMAGE="${{ fromJSON(github.event.inputs.client_payload).payload.security_control_image }}"
         REGISTRY="registry.jit.io"
     
-        echo "=== Docker auth debug for $REGISTRY ==="
+        echo "=== Docker auth forwarding debug ==="
         echo "IMAGE: $IMAGE"
-        echo "HOME: ${HOME}"
-        echo "DOCKER_CONFIG: ${DOCKER_CONFIG-<unset>}"
-        echo "DOCKER_AUTH_CONFIG: ${DOCKER_AUTH_CONFIG-<unset>}"
+        echo "HOME: $HOME"
+        echo "DOCKER_HOST: ${DOCKER_HOST-<unset>}"
+        echo "DOCKER_CONTEXT: ${DOCKER_CONTEXT-<unset>}"
         echo
     
         ISSUE=0
     
-        # 1) Check if DOCKER_AUTH_CONFIG is set (often overrides ~/.docker/config.json)
-        if [ "${DOCKER_AUTH_CONFIG-}" != "" ]; then
-          echo "❌ ISSUE: DOCKER_AUTH_CONFIG is set. This can override ~/.docker/config.json and cause 'no basic auth credentials'."
+        # 1) Make sure we're talking to the expected daemon
+        echo "--- docker context / daemon ---"
+        docker context show || true
+        docker info --format 'Server={{.ServerVersion}} RootDir={{.DockerRootDir}}' || true
+        echo
+    
+        if [ "${DOCKER_HOST-}" != "" ]; then
+          echo "❌ ISSUE: DOCKER_HOST is set ($DOCKER_HOST). You may be talking to a different daemon than expected."
           ISSUE=1
         else
-          echo "✅ OK: DOCKER_AUTH_CONFIG is not set."
+          echo "✅ OK: DOCKER_HOST is not set (default daemon via /var/run/docker.sock)."
         fi
     
-        # 2) Check if Docker config file exists and contains auth for registry.jit.io
-        DOCKER_CFG_FILE="${DOCKER_CONFIG-${HOME}/.docker}/config.json"
-    
-        if [ ! -f "$DOCKER_CFG_FILE" ]; then
-          echo "❌ ISSUE: Docker config.json not found at: $DOCKER_CFG_FILE"
+        # 2) Confirm the CLI has auth for the registry
+        CFG="${DOCKER_CONFIG-${HOME}/.docker}/config.json"
+        echo
+        echo "--- docker config ---"
+        echo "Using config: $CFG"
+        if [ ! -f "$CFG" ]; then
+          echo "❌ ISSUE: Docker config.json missing at $CFG"
           ISSUE=1
         else
-          echo "✅ OK: Found Docker config.json at: $DOCKER_CFG_FILE"
-          if grep -q "\"$REGISTRY\"" "$DOCKER_CFG_FILE"; then
-            echo "✅ OK: config.json contains an entry for $REGISTRY"
+          if grep -q "\"$REGISTRY\"" "$CFG"; then
+            echo "✅ OK: config.json contains $REGISTRY auth entry."
           else
-            echo "❌ ISSUE: config.json does NOT contain an entry for $REGISTRY (login may have written elsewhere)."
+            echo "❌ ISSUE: config.json does NOT contain $REGISTRY auth entry."
             ISSUE=1
           fi
         fi
     
+        # 3) Key test: a daemon-side pull vs a client-side manifest inspect
         echo
-        # 3) Quick auth-requiring check (does not print secrets)
-        echo "Testing access with 'docker manifest inspect' (non-fatal, informative)..."
+        echo "--- client-side check (uses ~/.docker/config.json) ---"
         if docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
-          echo "✅ OK: docker manifest inspect succeeded (auth is being used)."
+          echo "✅ OK: docker manifest inspect succeeded (CLI can auth to registry)."
         else
-          echo "❌ ISSUE: docker manifest inspect failed (likely auth not being applied)."
+          echo "❌ ISSUE: docker manifest inspect failed (CLI cannot auth)."
+          ISSUE=1
+        fi
+    
+        echo
+        echo "--- daemon-side check (same as your failing pull) ---"
+        set +e
+        docker pull "$IMAGE" 2>&1 | tee /tmp/docker_pull_out.txt
+        PULL_RC=${PIPESTATUS[0]}
+        set -e
+    
+        if [ "$PULL_RC" -eq 0 ]; then
+          echo "✅ OK: docker pull succeeded (dockerd received creds)."
+        else
+          if grep -qi "no basic auth credentials" /tmp/docker_pull_out.txt; then
+            echo "❌ ISSUE: dockerd did not receive/use registry creds (no basic auth credentials)."
+            echo "   This confirms an auth-forwarding or daemon-context mismatch."
+          else
+            echo "❌ ISSUE: docker pull failed for another reason (see output above)."
+          fi
           ISSUE=1
         fi
     
         echo
         if [ "$ISSUE" -eq 1 ]; then
-          echo "====== RESULT: ❌ AUTH CONFIG PROBLEM DETECTED ======"
-          echo "Most common fix: unset DOCKER_AUTH_CONFIG and/or pin DOCKER_CONFIG for login+pull."
-          echo "Example:"
-          echo "  unset DOCKER_AUTH_CONFIG"
-          echo "  export DOCKER_CONFIG=\"\${{ runner.temp }}/docker-config\""
-          echo "  mkdir -p \"\$DOCKER_CONFIG\""
-          echo "  (login...)"
-          echo "  docker pull \"$IMAGE\""
-          exit 0
+          echo "====== RESULT: ❌ PROBLEM DETECTED ======"
+          echo "Next step: force a dedicated DOCKER_CONFIG for both login and pull (see fix below)."
         else
-          echo "====== RESULT: ✅ NO OBVIOUS AUTH CONFIG ISSUE DETECTED ======"
-          exit 0
+          echo "====== RESULT: ✅ NO PROBLEM DETECTED ======"
         fi
+    
+        # Never fail the workflow from debug
+        exit 0
 
     - name: Pull image
       shell: bash
